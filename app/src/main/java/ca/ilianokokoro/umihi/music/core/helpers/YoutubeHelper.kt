@@ -98,276 +98,40 @@ object YoutubeHelper {
                     ?.jsonObject?.get("text")
                     ?.jsonPrimitive?.contentOrNull ?: return@forEach
 
-                val browseId = playlistRenderer["navigationEndpoint"]
+                val playlistId = playlistRenderer["navigationEndpoint"]
                     ?.jsonObject?.get("browseEndpoint")
                     ?.jsonObject?.get("browseId")
                     ?.jsonPrimitive?.contentOrNull ?: return@forEach
 
-                val thumbnailUrl =
-                    getBestThumbnailUrl(playlistRenderer["thumbnailRenderer"] ?: return@forEach)
+                val thumbnailRenderer = playlistRenderer["thumbnailRenderer"]
+                    ?.jsonObject?.get("musicThumbnailRenderer")
+                    ?.jsonObject
+
+                val thumbnailUrl = thumbnailRenderer?.get("thumbnail")
+                    ?.jsonObject?.get("thumbnails")
+                    ?.jsonArray?.lastOrNull()
+                    ?.jsonObject?.get("url")
+                    ?.jsonPrimitive?.contentOrNull ?: ""
+
+                val subtitle = playlistRenderer["subtitle"]
+                    ?.jsonObject?.get("runs")
+                    ?.jsonArray?.getOrNull(0)
+                    ?.jsonObject?.get("text")
+                    ?.jsonPrimitive?.contentOrNull ?: ""
 
                 playlistInfos.add(
-                    PlaylistInfo(id = browseId, title = title, coverHref = thumbnailUrl)
+                    PlaylistInfo(
+                        id = playlistId,
+                        title = title,
+                        coverHref = thumbnailUrl,
+                        description = subtitle
+                    )
                 )
             }
-
-            val continuationToken = renderer["continuations"]
-                ?.jsonArray?.firstOrNull()
-                ?.jsonObject?.get("nextContinuationData")
-                ?.jsonObject?.get("continuation")
-                ?.jsonPrimitive?.contentOrNull
-
-            if (continuationToken != null) {
-                val continuationJson = YoutubeRequestHelper.requestContinuation(
-                    continuationToken = continuationToken,
-                    settings = settings
-                )
-                playlistInfos.addAll(extractPlaylists(continuationJson, settings))
-            }
-        }
-
-        val continuationGridItems = json["continuationContents"]
-            ?.jsonObject
-            ?.get("gridContinuation")
-            ?.jsonObject
-            ?.get("items")
-            ?.jsonArray
-
-        continuationGridItems?.forEach { item ->
-            val playlistRenderer = item.jsonObject["musicTwoRowItemRenderer"]?.jsonObject
-                ?: return@forEach
-
-            val title = playlistRenderer["title"]
-                ?.jsonObject?.get("runs")
-                ?.jsonArray?.getOrNull(0)
-                ?.jsonObject?.get("text")
-                ?.jsonPrimitive?.contentOrNull ?: return@forEach
-
-            val browseId = playlistRenderer["navigationEndpoint"]
-                ?.jsonObject?.get("browseEndpoint")
-                ?.jsonObject?.get("browseId")
-                ?.jsonPrimitive?.contentOrNull ?: return@forEach
-
-            val thumbnailUrl =
-                getBestThumbnailUrl(playlistRenderer["thumbnailRenderer"] ?: return@forEach)
-
-            playlistInfos.add(
-                PlaylistInfo(id = browseId, title = title, coverHref = thumbnailUrl)
-            )
-        }
-
-        val continuationToken = json["continuationContents"]
-            ?.jsonObject
-            ?.get("gridContinuation")
-            ?.jsonObject
-            ?.get("continuations")
-            ?.jsonArray?.firstOrNull()
-            ?.jsonObject
-            ?.get("nextContinuationData")
-            ?.jsonObject
-            ?.get("continuation")
-            ?.jsonPrimitive?.contentOrNull
-
-        if (continuationToken != null) {
-            val continuationJson = YoutubeRequestHelper.requestContinuation(
-                continuationToken = continuationToken,
-                settings = settings
-            )
-            playlistInfos.addAll(extractPlaylists(continuationJson, settings))
         }
 
         return playlistInfos
     }
-
-
-    fun extractSearchResults(jsonString: String): List<Song> {
-        val json = Json.parseToJsonElement(jsonString).jsonObject
-
-        val tabs = json["contents"]
-            ?.jsonObject?.get("tabbedSearchResultsRenderer")
-            ?.jsonObject?.get("tabs")
-            ?.jsonArray ?: return emptyList()
-
-
-        val selectedTab = tabs.firstOrNull {
-            it.jsonObject["tabRenderer"]
-                ?.jsonObject?.get("selected")
-                ?.jsonPrimitive?.booleanOrNull == true
-        }?.jsonObject?.get("tabRenderer")?.jsonObject ?: return emptyList()
-
-        val contents = selectedTab["content"]
-            ?.jsonObject?.get("sectionListRenderer")
-            ?.jsonObject?.get("contents")
-            ?.jsonArray ?: return emptyList()
-
-        val songRendererList =
-            contents.jsonArray[0]
-                .jsonObject["musicShelfRenderer"]
-                ?.jsonObject["contents"]
-                ?.jsonArray
-                ?: return emptyList()
-
-        return songRendererList.mapNotNull { extractSong(it) }
-    }
-
-
-    fun extractSongInfo(jsonString: String): Song {
-        val json = Json.parseToJsonElement(jsonString).jsonObject
-        val details = json.jsonObject["videoDetails"]?.jsonObject
-
-        val videoId = details?.get("videoId")?.jsonPrimitive?.contentOrNull ?: ""
-        val title = details?.get("title")?.jsonPrimitive?.contentOrNull ?: ""
-        val author = details?.get("author")?.jsonPrimitive?.contentOrNull ?: ""
-        val lengthSeconds: Int =
-            details?.get("lengthSeconds")?.jsonPrimitive?.contentOrNull?.toInt()
-                ?: 0
-
-        return Song(
-            youtubeId = videoId,
-            title = title,
-            artist = author,
-            duration = formatSecondsForYouTubeDisplay(lengthSeconds),
-            thumbnailHref = extractHighQualityThumbnail(jsonString)
-        )
-    }
-
-
-    fun extractSongList(jsonString: String, settings: UmihiSettings): List<Song> {
-        val json = Json.parseToJsonElement(jsonString).jsonObject
-
-        val contents = json["contents"]
-            ?.jsonObject?.get("twoColumnBrowseResultsRenderer")
-            ?.jsonObject?.get("secondaryContents")
-            ?.jsonObject?.get("sectionListRenderer")
-            ?.jsonObject?.get("contents")
-            ?.jsonArray?.getOrNull(0)
-            ?.jsonObject?.get("musicPlaylistShelfRenderer")
-            ?.jsonObject?.get("contents")
-            ?.jsonArray
-        return parseSongsFromContents(contents, settings)
-    }
-
-    fun extractContinuationSongs(jsonString: String, settings: UmihiSettings): List<Song> {
-        val json = Json.parseToJsonElement(jsonString).jsonObject
-
-        val contents = json["onResponseReceivedActions"]
-            ?.jsonArray?.getOrNull(0)
-            ?.jsonObject?.get("appendContinuationItemsAction")
-            ?.jsonObject?.get("continuationItems")
-            ?.jsonArray
-
-        return parseSongsFromContents(contents, settings)
-    }
-
-
-    private fun formatSecondsForYouTubeDisplay(totalSeconds: Int): String {
-        val hours = totalSeconds / 3600
-        val minutes = (totalSeconds % 3600) / 60
-        val seconds = totalSeconds % 60
-
-        return if (hours > 0) {
-            String.format(Locale.US, "%d:%02d:%02d", hours, minutes, seconds)
-        } else {
-            String.format(Locale.US, "%d:%02d", minutes, seconds)
-        }
-    }
-
-    private fun extractHighQualityThumbnail(jsonString: String): String {
-        val json = Json.parseToJsonElement(jsonString).jsonObject
-        val url = json["videoDetails"]
-            ?.jsonObject?.get("thumbnail")
-            ?.jsonObject?.get("thumbnails")
-            ?.jsonArray?.last()
-            ?.jsonObject?.get("url")
-            ?.jsonPrimitive?.contentOrNull
-
-        return url ?: ""
-    }
-
-    private fun parseSongsFromContents(
-        contents: JsonArray?,
-        settings: UmihiSettings
-    ): List<Song> {
-        val songs = mutableListOf<Song>()
-        if (contents == null) return songs
-
-        for (shelf in contents) {
-            val continuationContent = shelf.jsonObject["continuationItemRenderer"]
-
-            if (continuationContent != null) {
-                val token = continuationContent.jsonObject["continuationEndpoint"]
-                    ?.jsonObject?.get("continuationCommand")
-                    ?.jsonObject?.get("token")
-                    ?.jsonPrimitive?.contentOrNull ?: ""
-
-                val otherSongs = extractContinuationSongs(
-                    YoutubeRequestHelper.requestContinuation(
-                        continuationToken = token,
-                        settings = settings
-                    ), settings
-                )
-                songs.addAll(otherSongs)
-
-                continue
-            }
-
-
-            val song = extractSong(shelf) ?: continue
-            songs.add(
-                song
-            )
-        }
-
-        return songs
-    }
-
-    fun extractSong(
-        json: JsonElement,
-    ): Song? {
-        val songContent =
-            json.jsonObject["musicResponsiveListItemRenderer"]?.jsonObject ?: return null
-        val thumbnailUrl = getBestThumbnailUrl(songContent["thumbnail"] ?: return null)
-
-        val title = getSongInfo(songContent, SongInfoType.TITLE)
-        val artist = getSongInfo(songContent, SongInfoType.ARTIST)
-        val videoId = songContent["playlistItemData"]
-            ?.jsonObject?.get("videoId")
-            ?.jsonPrimitive?.contentOrNull ?: return null
-
-
-        var duration = ""
-        val fixedColumn =
-            songContent["fixedColumns"]?.jsonArray[0]?.jsonObject["musicResponsiveListItemFixedColumnRenderer"]
-        val flexColumn =
-            songContent["flexColumns"]?.jsonArray[1]?.jsonObject["musicResponsiveListItemFlexColumnRenderer"]
-
-        if (fixedColumn != null) {
-            duration = fixedColumn.jsonObject["text"]
-                ?.jsonObject["runs"]
-                ?.jsonArray[0]
-                ?.jsonObject["text"]
-                ?.jsonPrimitive
-                ?.contentOrNull.toString()
-        } else if (flexColumn != null) {
-            duration = flexColumn.jsonObject["text"]
-                ?.jsonObject["runs"]
-                ?.jsonArray[4]
-                ?.jsonObject["text"]
-                ?.jsonPrimitive
-                ?.contentOrNull.toString()
-        }
-
-
-        return Song(
-            youtubeId = videoId,
-            title = title,
-            artist = artist,
-            duration = duration,
-            thumbnailHref = thumbnailUrl
-        )
-
-    }
-
 
     suspend fun getSongPlayerUrl(
         context: Context,
@@ -400,6 +164,19 @@ object YoutubeHelper {
         }
 
         val newUri = getSongUrlFromYoutube(song)
+        
+        // ⭐⭐⭐ AUTO-CACHÉ: Programar descarga silenciosa para futuro offline ⭐⭐⭐
+        // Solo si allowLocal está activado Y la canción no está ya descargada
+        if (allowLocal && (savedSong == null || savedSong.audioFilePath == null)) {
+            try {
+                AutoCacheHelper.scheduleAutoDownload(context, song)
+                printd("${song.youtubeId} : Scheduled auto-download for offline use")
+            } catch (e: Exception) {
+                // Si falla la programación, no interrumpir la reproducción
+                printe("${song.youtubeId} : Failed to schedule auto-download: ${e.message}")
+            }
+        }
+        
         localSongRepository.setStreamUrl(songId = song.youtubeId, streamUrl = newUri)
         printd("${song.youtubeId} : Got url from YouTube and saved song")
         return newUri
@@ -421,38 +198,34 @@ object YoutubeHelper {
                     extractor.fetchPage()
                     extractor.audioStreams.maxBy { it.averageBitrate }.content
                 }
-
-                return streamUrl
+                
+                if (streamUrl.isNotEmpty()) {
+                    return streamUrl
+                }
             } catch (e: Exception) {
-                printe(
-                    "Failed to get song ${song.youtubeId} from Youtube : Attempt -> $attempts/$retries : ${e.message}"
-                )
-                delay(Constants.YoutubeApi.RETRY_DELAY * (attempt + 1))
+                printe("Attempt $attempts failed for ${song.youtubeId}: ${e.message}")
+                if (attempts >= retries) {
+                    throw e
+                }
+                delay(1000L * attempts)
             }
         }
-
-        throw Exception("Fatal fail for song ${song.youtubeId}. Could not get it after $attempts attempts")
+        
+        throw Exception("Failed to get stream URL after $retries attempts")
     }
 
-    private suspend fun isYoutubeUrlValid(url: String): Boolean = withContext(Dispatchers.IO) {
-        try {
+    private fun isYoutubeUrlValid(url: String): Boolean {
+        return try {
             val request = Request.Builder()
                 .url(url)
                 .head()
                 .build()
-
+            
             client.newCall(request).execute().use { response ->
-                return@withContext response.isSuccessful
+                response.isSuccessful
             }
-        } catch (_: Exception) {
-            return@withContext false
+        } catch (e: Exception) {
+            false
         }
     }
-
-}
-
-
-enum class SongInfoType(val index: Int) {
-    TITLE(0),
-    ARTIST(1),
 }
