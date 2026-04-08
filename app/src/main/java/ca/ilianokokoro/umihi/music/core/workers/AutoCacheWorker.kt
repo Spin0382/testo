@@ -21,17 +21,15 @@ class AutoCacheWorker(
         return withContext(Dispatchers.IO) {
             val songId = inputData.getString(SONG_ID_KEY) ?: return@withContext Result.failure()
             
-            // Verificar si ya está descargado
             val localSongRepo = AppDatabase.getInstance(appContext).songRepository()
             val existingSong = localSongRepo.getSong(songId)
             
+            // Si ya tiene archivo de audio, no hacer nada
             if (existingSong?.audioFilePath != null) {
-                // Ya está descargado, no hacer nada
                 return@withContext Result.success()
             }
             
             try {
-                // Obtener info completa de la canción
                 val songRepository = SongRepository()
                 var fullSong: Song? = null
                 
@@ -45,11 +43,11 @@ class AutoCacheWorker(
                     return@withContext Result.failure()
                 }
                 
-                // Crear objeto Song básico para descargar
+                // Crear Song básico para descargar (sin youtubeUrl en constructor)
                 val songToDownload = Song(
                     youtubeId = songId,
                     title = fullSong!!.title,
-                    youtubeUrl = "https://music.youtube.com/watch?v=$songId"
+                    artist = fullSong!!.artist
                 )
                 
                 // Descargar audio
