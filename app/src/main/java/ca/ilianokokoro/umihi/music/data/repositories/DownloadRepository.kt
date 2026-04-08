@@ -81,6 +81,17 @@ class DownloadRepository(appContext: Context) {
         localSongRepository.deleteByIds(songsToClear)
     }
 
+    suspend fun deleteSong(playlist: Playlist, song: Song) {
+        val audioDir = UmihiHelper.getDownloadDirectory(_appContext, Constants.Downloads.AUDIO_FILES_FOLDER)
+        val imageDir = UmihiHelper.getDownloadDirectory(_appContext, Constants.Downloads.THUMBNAILS_FOLDER)
+        
+        File(audioDir, _appContext.getString(R.string.webm_extension, song.youtubeId)).takeIf { it.exists() }?.delete()
+        File(imageDir, _appContext.getString(R.string.jpg_extension, song.youtubeId)).takeIf { it.exists() }?.delete()
+        
+        localSongRepository.delete(song)
+        localPlaylistRepository.removeSongFromPlaylist(playlist.info.id, song.youtubeId)
+    }
+
     suspend fun downloadSong(playlist: Playlist, song: Song) {
         val id = "${playlist.info.id}${song.youtubeId}"
         val existingWork = getExistingJobs(id)

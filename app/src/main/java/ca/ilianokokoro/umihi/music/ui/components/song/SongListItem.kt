@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.MoreVert
@@ -41,18 +42,18 @@ fun SongListItem(
     playNext: () -> Unit,
     addToQueue: () -> Unit,
     modifier: Modifier = Modifier,
-    download: (() -> Unit)? = null
+    download: (() -> Unit)? = null,
+    delete: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
-
 
     Box {
         ListItem(
             leadingContent = {
                 Box(
                     modifier = modifier
-                        .size(60.dp)        // match the row height
-                        .aspectRatio(1f)        // force square
+                        .size(60.dp)
+                        .aspectRatio(1f)
                 ) {
                     SquareImage(
                         song.thumbnailPath ?: song.thumbnailHref,
@@ -75,7 +76,6 @@ fun SongListItem(
                             contentDescription = stringResource(R.string.download),
                         )
                     }
-
                     Text(
                         "${song.artist} ${stringResource(R.string.dot)} ${song.duration}",
                         modifier = modifier.basicMarquee()
@@ -85,11 +85,9 @@ fun SongListItem(
             trailingContent = {
                 IconButton(onClick = { expanded = true }) {
                     Icon(
-                        Icons.Rounded.MoreVert, contentDescription = stringResource(
-                            R.string.more
-                        )
+                        Icons.Rounded.MoreVert,
+                        contentDescription = stringResource(R.string.more)
                     )
-
                     DropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false },
@@ -121,16 +119,23 @@ fun SongListItem(
                                 }
                             )
                         }
-
+                        if (delete != null && song.downloaded) {
+                            ModernDropdownItem(
+                                leadingIcon = Icons.Rounded.Delete,
+                                text = stringResource(R.string.delete),
+                                onClick = {
+                                    delete()
+                                    expanded = false
+                                }
+                            )
+                        }
                     }
                 }
             },
-            modifier = modifier
-                .combinedClickable(onClick = onPress, onLongClick = {
-                    expanded = true
-                })
+            modifier = modifier.combinedClickable(
+                onClick = onPress,
+                onLongClick = { expanded = true }
+            )
         )
     }
-
-
 }

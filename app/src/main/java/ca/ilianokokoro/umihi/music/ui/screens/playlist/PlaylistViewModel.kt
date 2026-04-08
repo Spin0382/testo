@@ -177,7 +177,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         }
     }
 
-
     fun downloadSong(song: Song) {
         val playlist = getPlaylist() ?: return
         if (song.downloaded) {
@@ -185,6 +184,17 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         }
         viewModelScope.launch {
             downloadRepository.downloadSong(playlist, song)
+        }
+    }
+
+    fun deleteSong(song: Song) {
+        val playlist = getPlaylist() ?: return
+        if (!song.downloaded) {
+            return
+        }
+        viewModelScope.launch {
+            downloadRepository.deleteSong(playlist, song)
+            getPlaylistInfoAsync()
         }
     }
 
