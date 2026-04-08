@@ -97,4 +97,8 @@
     <string name="unlimited">Ilimitado</string>
     <string name="wifi_only_title">Descargar solo con WiFi</string>
     <string name="wifi_only_subtitle">Evita usar datos móviles para descargas automáticas</string>
+    <string name="history">Historial</string>
+    <string name="no_history">No hay canciones en el historial.
+Escucha algo para empezar.</string>
+    <string name="clear_history">Limpiar historial</string>
 </resources>
