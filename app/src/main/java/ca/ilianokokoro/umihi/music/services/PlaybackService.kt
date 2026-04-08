@@ -1,4 +1,3 @@
-import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 package ca.ilianokokoro.umihi.music.services
 
 import android.app.PendingIntent
@@ -8,6 +7,7 @@ import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
