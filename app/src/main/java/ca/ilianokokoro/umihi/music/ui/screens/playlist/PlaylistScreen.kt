@@ -126,28 +126,29 @@ fun PlaylistScreen(
                             )
                         }
 
-                        items(
+                                                items(
                             items = songs,
                             key = { song ->
                                 song.uid
                             }
                         ) { song ->
-                            SongListItem(song, onPress = {
-                                onOpenPlayer()
-                                playlistViewModel.playPlaylist(song)
-                            }, playNext = {
-                                PlayerManager.currentController?.addNext(song, application)
-                            }, addToQueue = {
-                                PlayerManager.currentController?.addToQueue(song, application)
-                            }, download = {
-                                playlistViewModel.downloadSong(song)
-                            })
+                            SongListItem(
+                                song = song,
+                                onPress = {
+                                    onOpenPlayer()
+                                    playlistViewModel.playPlaylist(song)
+                                },
+                                playNext = {
+                                    PlayerManager.currentController?.addNext(song, application)
+                                },
+                                addToQueue = {
+                                    PlayerManager.currentController?.addToQueue(song, application)
+                                },
+                                download = {
+                                    playlistViewModel.downloadSong(song)
+                                },
+                                delete = {
+                                    playlistViewModel.deleteSong(song)
+                                }
+                            )
                         }
-                    }
-                }
-            }
-        }
-    }
-
-
-}
