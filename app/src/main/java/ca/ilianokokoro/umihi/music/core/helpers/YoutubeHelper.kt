@@ -123,3 +123,29 @@ object YoutubeHelper {
         }
     }
 }
+
+// ============ MÉTODOS FALTANTES (AGREGADOS PARA QUE COMPILE) ============
+
+fun extractPlaylists(jsonString: String, settings: UmihiSettings): List<PlaylistInfo> {
+    // TODO: Implementar extracción real
+    printd("extractPlaylists: No implementado aún")
+    return emptyList()
+}
+
+fun extractSongList(jsonString: String, settings: UmihiSettings): List<Song> {
+    // TODO: Implementar extracción real
+    printd("extractSongList: No implementado aún")
+    return emptyList()
+}
+
+fun extractSongInfo(jsonString: String): Song {
+    // TODO: Implementar extracción real
+    printd("extractSongInfo: No implementado aún")
+    throw NotImplementedError("extractSongInfo no implementado")
+}
+
+fun extractSearchResults(jsonString: String): List<Song> {
+    // TODO: Implementar extracción real
+    printd("extractSearchResults: No implementado aún")
+    return emptyList()
+}
