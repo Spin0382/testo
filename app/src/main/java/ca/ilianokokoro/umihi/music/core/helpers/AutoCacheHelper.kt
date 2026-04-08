@@ -1,83 +1,42 @@
-package ca.ilianokokoro.umihi.music.core.workers
+package ca.ilianokokoro.umihi.music.core.helpers
 
 import android.content.Context
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import ca.ilianokokoro.umihi.music.core.ApiResult
-import ca.ilianokokoro.umihi.music.core.helpers.DownloadHelper
-import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
-import ca.ilianokokoro.umihi.music.data.database.AppDatabase
-import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
+import androidx.work.Constraints
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.workDataOf
+import ca.ilianokokoro.umihi.music.core.workers.AutoCacheWorker
 import ca.ilianokokoro.umihi.music.models.Song
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
-class AutoCacheWorker(
-    private val appContext: Context,
-    params: WorkerParameters
-) : CoroutineWorker(appContext, params) {
+object AutoCacheHelper {
     
-    override suspend fun doWork(): Result {
-        return withContext(Dispatchers.IO) {
-            val songId = inputData.getString(SONG_ID_KEY) ?: return@withContext Result.failure()
-            
-            val localSongRepo = AppDatabase.getInstance(appContext).songRepository()
-            val existingSong = localSongRepo.getSong(songId)
-            
-            // Si ya tiene archivo de audio, no hacer nada
-            if (existingSong?.audioFilePath != null) {
-                return@withContext Result.success()
-            }
-            
-            try {
-                val songRepository = SongRepository()
-                var fullSong: Song? = null
-                
-                songRepository.getSongInfo(songId).collect { result ->
-                    if (result is ApiResult.Success) {
-                        fullSong = result.data
-                    }
-                }
-                
-                if (fullSong == null) {
-                    return@withContext Result.failure()
-                }
-                
-                // Crear Song básico para descargar
-                val songToDownload = Song(
-                    youtubeId = songId,
-                    title = fullSong!!.title,
-                    artist = fullSong!!.artist
+    fun scheduleAutoDownload(context: Context, song: Song) {
+        val workManager = WorkManager.getInstance(context)
+        
+        workManager.cancelUniqueWork("auto_cache_${song.youtubeId}")
+        
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.UNMETERED)
+            .setRequiresBatteryNotLow(true)
+            .setRequiresStorageNotLow(true)
+            .build()
+        
+        val request = OneTimeWorkRequestBuilder<AutoCacheWorker>()
+            .setInputData(
+                workDataOf(
+                    AutoCacheWorker.SONG_ID_KEY to song.youtubeId,
+                    AutoCacheWorker.SONG_TITLE_KEY to song.title
                 )
-                
-                // Descargar audio
-                val audioPath = DownloadHelper.downloadAudio(appContext, songToDownload)
-                
-                // Descargar thumbnail
-                val thumbnailPath = DownloadHelper.downloadImage(
-                    appContext,
-                    fullSong!!.thumbnailHref,
-                    songId
-                )
-                
-                // Guardar en base de datos
-                val updatedSong = fullSong!!.copy(
-                    audioFilePath = audioPath,
-                    thumbnailPath = thumbnailPath?.path
-                )
-                
-                localSongRepo.create(updatedSong)
-                
-                Result.success()
-            } catch (e: Exception) {
-                printe("AutoCacheWorker failed for $songId: ${e.message}")
-                Result.failure()
-            }
-        }
-    }
-    
-    companion object {
-        const val SONG_ID_KEY = "song_id"
-        const val SONG_TITLE_KEY = "song_title"
+            )
+            .setConstraints(constraints)
+            .addTag("auto_cache")
+            .build()
+        
+        workManager.enqueueUniqueWork(
+            "auto_cache_${song.youtubeId}",
+            androidx.work.ExistingWorkPolicy.REPLACE,
+            request
+        )
     }
 }
