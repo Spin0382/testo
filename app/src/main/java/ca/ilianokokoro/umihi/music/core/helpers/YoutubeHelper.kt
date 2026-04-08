@@ -7,7 +7,9 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printd
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
+import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
+import ca.ilianokokoro.umihi.music.models.UmihiSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -62,20 +64,18 @@ object YoutubeHelper {
 
         val newUri = getSongUrlFromYoutube(song)
         
-        // ⭐⭐⭐ AUTO-CACHÉ: Programar descarga silenciosa para futuro offline ⭐⭐⭐
-        // Solo si allowLocal está activado Y la canción no está ya descargada
+        // AUTO-CACHÉ
         if (allowLocal && (savedSong == null || savedSong.audioFilePath == null)) {
             try {
                 AutoCacheHelper.scheduleAutoDownload(context, song)
-                printd("${song.youtubeId} : Scheduled auto-download for offline use")
+                printd("${song.youtubeId} : Scheduled auto-download")
             } catch (e: Exception) {
-                // Si falla la programación, no interrumpir la reproducción
                 printe("${song.youtubeId} : Failed to schedule auto-download: ${e.message}")
             }
         }
         
         localSongRepository.setStreamUrl(songId = song.youtubeId, streamUrl = newUri)
-        printd("${song.youtubeId} : Got url from YouTube and saved song")
+        printd("${song.youtubeId} : Got url from YouTube")
         return newUri
     }
 
@@ -122,30 +122,21 @@ object YoutubeHelper {
             false
         }
     }
-}
 
-// ============ MÉTODOS FALTANTES (AGREGADOS PARA QUE COMPILE) ============
+    // Métodos para que compile
+    fun extractPlaylists(jsonString: String, settings: UmihiSettings): List<PlaylistInfo> {
+        return emptyList()
+    }
 
-fun extractPlaylists(jsonString: String, settings: UmihiSettings): List<PlaylistInfo> {
-    // TODO: Implementar extracción real
-    printd("extractPlaylists: No implementado aún")
-    return emptyList()
-}
+    fun extractSongList(jsonString: String, settings: UmihiSettings): List<Song> {
+        return emptyList()
+    }
 
-fun extractSongList(jsonString: String, settings: UmihiSettings): List<Song> {
-    // TODO: Implementar extracción real
-    printd("extractSongList: No implementado aún")
-    return emptyList()
-}
+    fun extractSongInfo(jsonString: String): Song {
+        throw NotImplementedError("extractSongInfo no implementado")
+    }
 
-fun extractSongInfo(jsonString: String): Song {
-    // TODO: Implementar extracción real
-    printd("extractSongInfo: No implementado aún")
-    throw NotImplementedError("extractSongInfo no implementado")
-}
-
-fun extractSearchResults(jsonString: String): List<Song> {
-    // TODO: Implementar extracción real
-    printd("extractSearchResults: No implementado aún")
-    return emptyList()
+    fun extractSearchResults(jsonString: String): List<Song> {
+        return emptyList()
+    }
 }
