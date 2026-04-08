@@ -122,7 +122,7 @@ fun SongListItem(
                         if (delete != null && song.downloaded) {
                             ModernDropdownItem(
                                 leadingIcon = Icons.Rounded.Delete,
-                                text = stringResource(R.string.delete),
+                                text = stringResource(R.string.delete_download),
                                 onClick = {
                                     delete()
                                     expanded = false

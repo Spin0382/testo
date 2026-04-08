@@ -89,7 +89,6 @@ class DownloadRepository(appContext: Context) {
         File(imageDir, _appContext.getString(R.string.jpg_extension, song.youtubeId)).takeIf { it.exists() }?.delete()
         
         localSongRepository.delete(song)
-        localPlaylistRepository.removeSongFromPlaylist(playlist.info.id, song.youtubeId)
     }
 
     suspend fun downloadSong(playlist: Playlist, song: Song) {

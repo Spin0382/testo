@@ -152,3 +152,9 @@ fun PlaylistScreen(
                                 }
                             )
                         }
+                    }
+                }
+            }
+        }
+    }
+}
