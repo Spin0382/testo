@@ -64,7 +64,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 _application.getString(R.string.login_info_cleared),
                 Toast.LENGTH_LONG
             ).show()
-
         }
     }
 
@@ -78,6 +77,28 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    fun updateShowCacheLimitDialog(value: Boolean) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(showCacheLimitDialog = value)
+            }
+        }
+    }
+
+    fun updateCacheLimit(value: Int) {
+        updateSetting(
+            DatastoreRepository.PreferenceKeys.CACHE_LIMIT,
+            value
+        )
+        updateShowCacheLimitDialog(false)
+    }
+
+    fun updateWifiOnly(value: Boolean) {
+        updateSetting(
+            DatastoreRepository.PreferenceKeys.WIFI_ONLY,
+            value
+        )
+    }
 
     @OptIn(UnstableApi::class)
     fun clearDownloads() {
@@ -94,7 +115,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             ).show()
         }
     }
-
 
     fun changeUpdateChannel(updateChannel: DatastoreRepository.UpdateChannel) {
         updateSetting(
@@ -118,7 +138,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             value
         )
     }
-
 
     fun checkForUpdates() {
         viewModelScope.launch {

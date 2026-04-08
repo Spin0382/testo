@@ -93,4 +93,7 @@
     <string name="playback">Playback</string>
     <string name="enable_audio_offload">Enable Audio Offload</string>
     <string name="audio_offload_subtitle">Offloads audio decoding to dedicated hardware, improving battery life. May cause some playback issues in some cases.</string>
-</resources>
+</resources>    <string name="cache_limit_title">Límite de caché offline</string>
+    <string name="unlimited">Ilimitado</string>
+    <string name="wifi_only_title">Descargar solo con WiFi</string>
+    <string name="wifi_only_subtitle">Evita usar datos móviles para descargas automáticas</string>

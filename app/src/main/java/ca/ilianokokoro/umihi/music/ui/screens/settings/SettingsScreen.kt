@@ -18,8 +18,10 @@ import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Memory
+import androidx.compose.material.icons.outlined.Storage
 import androidx.compose.material.icons.outlined.SystemUpdate
 import androidx.compose.material.icons.outlined.Update
+import androidx.compose.material.icons.outlined.Wifi
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
@@ -38,6 +40,7 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.VersionManager
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
+import ca.ilianokokoro.umihi.music.ui.components.dialog.CacheLimitDialog
 import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateChannelDialog
 import ca.ilianokokoro.umihi.music.ui.screens.settings.components.BooleanSettingItem
 import ca.ilianokokoro.umihi.music.ui.screens.settings.components.SettingsItem
@@ -52,7 +55,6 @@ fun SettingsScreen(
 ) {
     val uiState = settingsViewModel.uiState.collectAsStateWithLifecycle().value
 
-    // Refresh when returning to the screen
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -64,7 +66,6 @@ fun SettingsScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-
     Column(
         modifier = Modifier
             .padding(horizontal = 16.dp)
@@ -75,11 +76,11 @@ fun SettingsScreen(
             16.dp,
             alignment = Alignment.CenterVertically
         )
-
     ) {
         when (uiState.screenState) {
             is ScreenState.Success -> {
                 val state = uiState.screenState
+                
                 SettingsSection(
                     title = stringResource(R.string.account)
                 ) {
@@ -119,7 +120,6 @@ fun SettingsScreen(
                     )
                 }
 
-
                 SettingsSection(
                     title = stringResource(R.string.playback),
                 ) {
@@ -132,7 +132,6 @@ fun SettingsScreen(
                     )
                 }
 
-
                 SettingsSection(
                     title = stringResource(R.string.data_and_storage),
                 ) {
@@ -141,6 +140,30 @@ fun SettingsScreen(
                         subtitle = stringResource(R.string.clear_data_message),
                         leadingIcon = Icons.Outlined.Delete,
                         onClick = settingsViewModel::clearDownloads
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    SettingsItem(
+                        title = stringResource(R.string.cache_limit_title),
+                        subtitle = when (state.settings.cacheLimit) {
+                            0 -> "500 MB"
+                            1 -> "1 GB"
+                            2 -> "2 GB"
+                            else -> stringResource(R.string.unlimited)
+                        },
+                        leadingIcon = Icons.Outlined.Storage,
+                        onClick = { settingsViewModel.updateShowCacheLimitDialog(true) }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
+                    BooleanSettingItem(
+                        title = stringResource(R.string.wifi_only_title),
+                        subtitle = stringResource(R.string.wifi_only_subtitle),
+                        leadingIcon = Icons.Outlined.Wifi,
+                        value = state.settings.wifiOnly,
+                        onToggle = { settingsViewModel.updateWifiOnly(it) }
                     )
                 }
 
@@ -181,6 +204,14 @@ fun SettingsScreen(
                             settingsViewModel.updateShowUpdateChannelDialog(false)
                         })
                 }
+
+                if (uiState.showCacheLimitDialog) {
+                    CacheLimitDialog(
+                        selectedOption = state.settings.cacheLimit,
+                        onSelect = { settingsViewModel.updateCacheLimit(it) },
+                        onClose = { settingsViewModel.updateShowCacheLimitDialog(false) }
+                    )
+                }
             }
 
             ScreenState.Loading -> LoadingAnimation()
@@ -190,8 +221,4 @@ fun SettingsScreen(
             )
         }
     }
-
-
 }
-
-

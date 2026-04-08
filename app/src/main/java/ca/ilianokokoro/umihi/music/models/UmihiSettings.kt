@@ -8,5 +8,7 @@ data class UmihiSettings(
     val dataSyncId: String,
     val showPodcastPlaylist: Boolean = true,
     val useSpecialLanguage: Boolean = false,
-    val useAudioOffload: Boolean = false
+    val useAudioOffload: Boolean = false,
+    val cacheLimit: Int = 0,
+    val wifiOnly: Boolean = true
 )

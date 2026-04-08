@@ -6,22 +6,24 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.CACHE_LIMIT
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.COOKIES
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.DATA_SYNC_ID
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.SHOW_PODCAST_PLAYLIST
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.UPDATE_CHANNEL
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.USE_AUDIO_OFFLOAD
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.USE_SPECIAL_LANGUAGE
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.WIFI_ONLY
 import ca.ilianokokoro.umihi.music.models.Cookies
 import ca.ilianokokoro.umihi.music.models.UmihiSettings
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = Constants.Datastore.NAME)
 
@@ -33,6 +35,8 @@ class DatastoreRepository(private val context: Context) {
         val SHOW_PODCAST_PLAYLIST = booleanPreferencesKey(Constants.Datastore.SHOW_PODCAST_PLAYLIST)
         val USE_SPECIAL_LANGUAGE = booleanPreferencesKey(Constants.Datastore.USE_SPECIAL_LANGUAGE)
         val USE_AUDIO_OFFLOAD = booleanPreferencesKey(Constants.Datastore.USE_AUDIO_OFFLOAD)
+        val CACHE_LIMIT = intPreferencesKey("cache_limit")
+        val WIFI_ONLY = booleanPreferencesKey("wifi_only")
     }
 
     suspend fun <T> save(key: Preferences.Key<T>, value: T) {
@@ -48,6 +52,8 @@ class DatastoreRepository(private val context: Context) {
         val showPodcastPlaylist = it[SHOW_PODCAST_PLAYLIST] ?: true
         val useSpecialLanguage = it[USE_SPECIAL_LANGUAGE] ?: false
         val useAudioOffload = it[USE_AUDIO_OFFLOAD] ?: false
+        val cacheLimit = it[CACHE_LIMIT] ?: 0
+        val wifiOnly = it[WIFI_ONLY] ?: true
         val cookies = cookies.first()
         val dataSyncId = dataSyncId.first()
 
@@ -57,7 +63,9 @@ class DatastoreRepository(private val context: Context) {
             cookies = cookies,
             dataSyncId = dataSyncId,
             useSpecialLanguage = useSpecialLanguage,
-            useAudioOffload = useAudioOffload
+            useAudioOffload = useAudioOffload,
+            cacheLimit = cacheLimit,
+            wifiOnly = wifiOnly
         )
     }
 
@@ -88,10 +96,8 @@ class DatastoreRepository(private val context: Context) {
         }
     }
 
-
     enum class UpdateChannel {
         Stable,
         Beta
     }
-
 }
