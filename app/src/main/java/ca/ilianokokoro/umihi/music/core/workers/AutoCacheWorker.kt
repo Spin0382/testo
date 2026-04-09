@@ -9,7 +9,6 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.DownloadHelper
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
-import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.models.Song
@@ -25,14 +24,17 @@ class AutoCacheWorker(
     override suspend fun doWork(): Result {
         return withContext(Dispatchers.IO) {
             val songId = inputData.getString(SONG_ID_KEY) ?: return@withContext Result.failure()
+            val songTitle = inputData.getString(SONG_TITLE_KEY) ?: ""
             
-            val localSongRepo = AppDatabase.getInstance(appContext).songRepository()
             val datastoreRepository = DatastoreRepository(appContext)
             val settings = datastoreRepository.getSettings()
             
-            val existingSong = localSongRepo.getSong(songId)
+            // Verificar si el archivo ya existe
+            val audioDir = UmihiHelper.getDownloadDirectory(appContext, Constants.Downloads.AUDIO_FILES_FOLDER)
+            val audioFile = File(audioDir, appContext.getString(R.string.webm_extension, songId))
             
-            if (existingSong?.audioFilePath != null) {
+            if (audioFile.exists()) {
+                UmihiHelper.printd("AutoCacheWorker: File already exists for $songId")
                 return@withContext Result.success()
             }
             
@@ -47,6 +49,7 @@ class AutoCacheWorker(
                 }
                 
                 if (fullSong == null) {
+                    printe("AutoCacheWorker: Failed to get song info for $songId")
                     return@withContext Result.failure()
                 }
                 
@@ -56,20 +59,19 @@ class AutoCacheWorker(
                     artist = fullSong!!.artist
                 )
                 
+                // Descargar audio (solo archivo, NO guardar en BD de Descargas)
                 val audioPath = DownloadHelper.downloadAudio(appContext, songToDownload)
-                val thumbnailPath = DownloadHelper.downloadImage(
+                
+                // Descargar thumbnail
+                DownloadHelper.downloadImage(
                     appContext,
                     fullSong!!.thumbnailHref,
                     songId
                 )
                 
-                val updatedSong = fullSong!!.copy(
-                    audioFilePath = audioPath,
-                    thumbnailPath = thumbnailPath?.path
-                )
+                UmihiHelper.printd("AutoCacheWorker: Downloaded $songTitle successfully")
                 
-                localSongRepo.create(updatedSong)
-                
+                // Verificar límite de caché
                 enforceCacheLimit(settings.cacheLimit)
                 
                 Result.success()
@@ -90,40 +92,28 @@ class AutoCacheWorker(
             else -> return
         }
         
-        val localSongRepo = AppDatabase.getInstance(appContext).songRepository()
-        val downloadedSongs = localSongRepo.getDownloadedSongs()
-        
         val audioDir = UmihiHelper.getDownloadDirectory(appContext, Constants.Downloads.AUDIO_FILES_FOLDER)
         val imageDir = UmihiHelper.getDownloadDirectory(appContext, Constants.Downloads.THUMBNAILS_FOLDER)
         
-        var totalSize = 0L
-        val songFileMap = mutableMapOf<String, File>()
-        
-        for (song in downloadedSongs) {
-            val audioFile = File(audioDir, appContext.getString(R.string.webm_extension, song.youtubeId))
-            if (audioFile.exists()) {
-                totalSize += audioFile.length()
-                songFileMap[song.youtubeId] = audioFile
-            }
-        }
+        val files = audioDir.listFiles() ?: return
+        var totalSize = files.sumOf { it.length() }
         
         if (totalSize <= maxSizeBytes) return
         
-        // Ordenar archivos por fecha de modificación (más antiguos primero)
-        val filesSorted = songFileMap.values.sortedBy { it.lastModified() }
+        // Ordenar por fecha de modificación (más antiguos primero)
+        files.sortBy { it.lastModified() }
         
-        for (file in filesSorted) {
+        for (file in files) {
             if (totalSize <= maxSizeBytes) break
             
             val songId = file.nameWithoutExtension
-            val song = localSongRepo.getSong(songId)
+            totalSize -= file.length()
+            file.delete()
             
-            if (song != null) {
-                totalSize -= file.length()
-                file.delete()
-                File(imageDir, appContext.getString(R.string.jpg_extension, songId)).delete()
-                localSongRepo.delete(song)
-            }
+            // Eliminar thumbnail
+            File(imageDir, appContext.getString(R.string.jpg_extension, songId)).delete()
+            
+            UmihiHelper.printd("AutoCacheWorker: Deleted old cache file: $songId")
         }
     }
     

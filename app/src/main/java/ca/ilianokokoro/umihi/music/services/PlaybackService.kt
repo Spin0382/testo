@@ -7,7 +7,6 @@ import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -30,9 +29,11 @@ import ca.ilianokokoro.umihi.music.core.ExoCache
 import ca.ilianokokoro.umihi.music.core.datasources.YoutubeDataSourceFactory
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.extensions.cappedTo
+import ca.ilianokokoro.umihi.music.models.HistorySong
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -50,6 +51,7 @@ class PlaybackService : MediaSessionService() {
     private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(this)
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private val database by lazy { AppDatabase.getInstance(application) }
 
     override fun onCreate() {
         super.onCreate()
@@ -82,8 +84,6 @@ class PlaybackService : MediaSessionService() {
                 .setIsSpeedChangeSupportRequired(true)
                 .build()
 
-
-
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -104,20 +104,15 @@ class PlaybackService : MediaSessionService() {
                 .build()
 
         player.addListener(object : Player.Listener {
-            override fun onMediaItemTransition(
-                mediaItem: MediaItem?,
-                reason: Int
-            ) {
-                // Load the full res image when a new song is played
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 updateCurrentMediaItemThumbnail(mediaItem)
+                mediaItem?.let { saveToHistory(it) }
             }
 
-            // Show toast on error
             override fun onPlayerError(error: PlaybackException) {
                 Toast.makeText(applicationContext, error.message, Toast.LENGTH_LONG).show()
             }
         })
-
 
         val intent = packageManager.getLaunchIntentForPackage(packageName)
         val pendingIntent = PendingIntent.getActivity(
@@ -148,9 +143,7 @@ class PlaybackService : MediaSessionService() {
             .build()
     }
 
-    override fun onGetSession(
-        controllerInfo: MediaSession.ControllerInfo
-    ): MediaSession? = mediaSession
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? = mediaSession
 
     override fun onTaskRemoved(rootIntent: android.content.Intent?) {
         val player = mediaSession?.player
@@ -169,6 +162,29 @@ class PlaybackService : MediaSessionService() {
         super.onDestroy()
     }
 
+    private fun saveToHistory(mediaItem: MediaItem) {
+        val songId = mediaItem.mediaId
+        val title = mediaItem.mediaMetadata.title?.toString() ?: return
+        val artist = mediaItem.mediaMetadata.artist?.toString() ?: ""
+        val duration = mediaItem.mediaMetadata.extras?.getString(Constants.ExoPlayer.SongMetadata.DURATION) ?: ""
+        
+        serviceScope.launch {
+            try {
+                val historySong = HistorySong(
+                    youtubeId = songId,
+                    title = title,
+                    artist = artist,
+                    duration = duration,
+                    thumbnailHref = ""
+                )
+                database.historyDao().insert(historySong)
+                UmihiHelper.printd("Saved to history: $title")
+            } catch (e: Exception) {
+                printe("Failed to save to history: ${e.message}")
+            }
+        }
+    }
+
     private fun updateCurrentMediaItemThumbnail(mediaItem: MediaItem?) {
         if (mediaItem == null) return
 
@@ -185,54 +201,34 @@ class PlaybackService : MediaSessionService() {
                 val downloadedImage = File(imageDir, "$songId.jpg")
                 if (downloadedImage.exists()) {
                     val imageBytes = downloadedImage.readBytes()
-
-                    updateMediaItemArtwork(
-                        mediaItem,
-                        imageBytes.cappedTo(),
-                        downloadedImage.toUri()
-                    )
+                    updateMediaItemArtwork(mediaItem, imageBytes.cappedTo(), downloadedImage.toUri())
                     return@launch
                 }
 
-                songRepository.getSongInfo(songId)
-                    .collect { result ->
-                        when (result) {
-                            is ApiResult.Success -> {
-                                val song = result.data
-                                val thumbnail = song.thumbnailHref
-                                if (thumbnail.isNotBlank()) {
-                                    val artBytes = UmihiHelper.fetchArtworkBytes(thumbnail)
-                                    if (artBytes != null) {
-                                        updateMediaItemArtwork(
-                                            mediaItem,
-                                            artBytes,
-                                            song.thumbnailHref.toUri()
-                                        )
-                                    }
-                                    return@collect
+                songRepository.getSongInfo(songId).collect { result ->
+                    when (result) {
+                        is ApiResult.Success -> {
+                            val song = result.data
+                            val thumbnail = song.thumbnailHref
+                            if (thumbnail.isNotBlank()) {
+                                val artBytes = UmihiHelper.fetchArtworkBytes(thumbnail)
+                                if (artBytes != null) {
+                                    updateMediaItemArtwork(mediaItem, artBytes, song.thumbnailHref.toUri())
                                 }
+                                return@collect
                             }
-
-                            is ApiResult.Error -> {
-                                error("ApiResult.Error was null")
-                            }
-
-                            else -> {}
                         }
+                        is ApiResult.Error -> {}
+                        else -> {}
                     }
+                }
             } catch (ex: Exception) {
-                printe(
-                    message = "Failed to get full res thumbnail for $songId. Error : ${ex.message}",
-                )
+                printe("Failed to get full res thumbnail for $songId. Error : ${ex.message}")
             }
         }
     }
 
-    private suspend fun updateMediaItemArtwork(
-        mediaItem: MediaItem,
-        artBytes: ByteArray?,
-        uri: Uri
-    ) {
+    private suspend fun updateMediaItemArtwork(mediaItem: MediaItem, artBytes: ByteArray?, uri: Uri) {
         val updated = mediaItem.buildUpon()
             .setMediaMetadata(
                 mediaItem.mediaMetadata.buildUpon()
@@ -243,10 +239,7 @@ class PlaybackService : MediaSessionService() {
             .build()
         withContext(Dispatchers.Main) {
             if (player.currentMediaItem?.mediaId == mediaItem.mediaId) {
-                player.replaceMediaItem(
-                    player.currentMediaItemIndex,
-                    updated
-                )
+                player.replaceMediaItem(player.currentMediaItemIndex, updated)
             }
         }
     }
