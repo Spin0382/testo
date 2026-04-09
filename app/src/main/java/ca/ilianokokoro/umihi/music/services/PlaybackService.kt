@@ -167,18 +167,26 @@ class PlaybackService : MediaSessionService() {
         val title = mediaItem.mediaMetadata.title?.toString() ?: return
         val artist = mediaItem.mediaMetadata.artist?.toString() ?: ""
         val duration = mediaItem.mediaMetadata.extras?.getString(Constants.ExoPlayer.SongMetadata.DURATION) ?: ""
+        val thumbnailUrl = mediaItem.mediaMetadata.artworkUri?.toString() ?: ""
         
         serviceScope.launch {
             try {
+                // Si no hay artworkUri en el MediaItem, intentar obtenerlo de la BD
+                var finalThumbnailUrl = thumbnailUrl
+                if (finalThumbnailUrl.isBlank()) {
+                    val localSong = database.songRepository().getSong(songId)
+                    finalThumbnailUrl = localSong?.thumbnailHref ?: ""
+                }
+                
                 val historySong = HistorySong(
                     youtubeId = songId,
                     title = title,
                     artist = artist,
                     duration = duration,
-                    thumbnailHref = ""
+                    thumbnailHref = finalThumbnailUrl
                 )
                 database.historyDao().insert(historySong)
-                UmihiHelper.printd("Saved to history: $title")
+                UmihiHelper.printd("Saved to history: $title with thumbnail: $finalThumbnailUrl")
             } catch (e: Exception) {
                 printe("Failed to save to history: ${e.message}")
             }
