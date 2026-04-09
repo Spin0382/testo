@@ -184,7 +184,7 @@ object YoutubeHelper {
         val newUri = getSongUrlFromYoutube(song)
         
         // ⭐ AUTO-CACHÉ ⭐
-        if (allowLocal && (savedSong == null || savedSong.audioFilePath == null)) {
+        if (allowLocal && savedSong?.audioFilePath == null) {
             try {
                 AutoCacheHelper.scheduleAutoDownload(context, song)
                 printd("${song.youtubeId} : Scheduled auto-download")

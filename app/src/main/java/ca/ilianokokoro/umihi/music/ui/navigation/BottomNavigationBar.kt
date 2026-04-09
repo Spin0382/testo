@@ -6,6 +6,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
@@ -43,7 +45,7 @@ fun BottomNavigationBar(
                 clickCount.intValue = 0
             },
             icon = {
-                androidx.compose.material3.Icon(
+                Icon(
                     Icons.Default.Home,
                     contentDescription = null
                 )
@@ -57,12 +59,26 @@ fun BottomNavigationBar(
                 clickCount.intValue = 0
             },
             icon = {
-                androidx.compose.material3.Icon(
+                Icon(
                     Icons.Default.Search,
                     contentDescription = null
                 )
             },
             label = { Text(stringResource(R.string.search)) }
+        )
+        NavigationBarItem(
+            selected = currentTab is HistoryScreenKey,
+            onClick = {
+                onTabSelected(HistoryScreenKey)
+                clickCount.intValue = 0
+            },
+            icon = {
+                Icon(
+                    Icons.Outlined.History,
+                    contentDescription = null
+                )
+            },
+            label = { Text(stringResource(R.string.history)) }
         )
         NavigationBarItem(
             selected = currentTab is SettingsScreenKey,
@@ -89,7 +105,7 @@ fun BottomNavigationBar(
                 }
             },
             icon = {
-                androidx.compose.material3.Icon(
+                Icon(
                     Icons.Default.Settings,
                     contentDescription = null
                 )

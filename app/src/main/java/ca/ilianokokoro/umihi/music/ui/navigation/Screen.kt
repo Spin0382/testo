@@ -15,6 +15,9 @@ data object HomeScreenKey : NavKey
 data object SearchScreenKey : NavKey
 
 @Serializable
+data object HistoryScreenKey : NavKey
+
+@Serializable
 data object SettingsScreenKey : NavKey
 
 @Serializable
@@ -54,6 +57,13 @@ fun rememberScreenUiConfig(current: NavKey): ScreenUiConfig {
                 selectedTab = SearchScreenKey
             )
 
+            HistoryScreenKey -> ScreenUiConfig(
+                titleId = R.string.history,
+                showBack = false,
+                showBottomBar = true,
+                selectedTab = HistoryScreenKey
+            )
+
             SettingsScreenKey -> ScreenUiConfig(
                 titleId = R.string.settings,
                 showBack = false,
@@ -84,4 +94,3 @@ fun rememberScreenUiConfig(current: NavKey): ScreenUiConfig {
         }
     }
 }
-

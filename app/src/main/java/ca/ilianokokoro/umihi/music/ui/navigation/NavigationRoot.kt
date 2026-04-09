@@ -39,14 +39,18 @@ import androidx.navigation3.ui.NavDisplay
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
+import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.extensions.playSong
 import ca.ilianokokoro.umihi.music.ui.components.BackButton
 import ca.ilianokokoro.umihi.music.ui.components.miniplayer.MiniPlayerWrapper
 import ca.ilianokokoro.umihi.music.ui.screens.auth.AuthScreen
+import ca.ilianokokoro.umihi.music.ui.screens.history.HistoryScreen
 import ca.ilianokokoro.umihi.music.ui.screens.home.HomeScreen
 import ca.ilianokokoro.umihi.music.ui.screens.player.PlayerScreen
 import ca.ilianokokoro.umihi.music.ui.screens.playlist.PlaylistScreen
 import ca.ilianokokoro.umihi.music.ui.screens.search.SearchScreen
 import ca.ilianokokoro.umihi.music.ui.screens.settings.SettingsScreen
+import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -219,6 +223,27 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                         is SearchScreenKey -> NavEntry(key) {
                             SearchScreen(
                                 application = app,
+                            )
+                        }
+
+                        is HistoryScreenKey -> NavEntry(key) {
+                            HistoryScreen(
+                                application = app,
+                                onSongClick = { historySong ->
+                                    val song = ca.ilianokokoro.umihi.music.models.Song(
+                                        youtubeId = historySong.youtubeId,
+                                        title = historySong.title,
+                                        artist = historySong.artist,
+                                        duration = historySong.duration,
+                                        thumbnailHref = historySong.thumbnailHref
+                                    )
+                                    androidx.lifecycle.viewmodel.compose.viewModel().run {
+                                        kotlinx.coroutines.MainScope().launch {
+                                            PlayerManager.currentController?.playSong(song)
+                                        }
+                                    }
+                                    backStack.add(PlayerScreenKey)
+                                }
                             )
                         }
 
