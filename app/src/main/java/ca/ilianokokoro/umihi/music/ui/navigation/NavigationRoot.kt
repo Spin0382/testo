@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -60,6 +61,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
     val app = LocalContext.current.applicationContext as Application
     val currentScreen = backStack.last()
     val screenConfig = rememberScreenUiConfig(currentScreen)
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         modifier = modifier
@@ -237,10 +239,8 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                                         duration = historySong.duration,
                                         thumbnailHref = historySong.thumbnailHref
                                     )
-                                    androidx.lifecycle.viewmodel.compose.viewModel().run {
-                                        kotlinx.coroutines.MainScope().launch {
-                                            PlayerManager.currentController?.playSong(song)
-                                        }
+                                    scope.launch {
+                                        PlayerManager.currentController?.playSong(song)
                                     }
                                     backStack.add(PlayerScreenKey)
                                 }
@@ -250,7 +250,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                         else -> throw RuntimeException(
                             app.getString(
                                 R.string.invalid_navkey,
-                                key
+                                key.toString()
                             )
                         )
                     }
