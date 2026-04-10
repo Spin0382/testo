@@ -35,7 +35,8 @@ import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.extensions.addNext
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
-import ca.ilianokokoro.umihi.music.extensions.playSong
+import ca.ilianokokoro.umihi.music.extensions.isCurrentSong
+import ca.ilianokokoro.umihi.music.extensions.playSongWithoutReplacingQueue
 import ca.ilianokokoro.umihi.music.models.HistorySong
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
 import kotlinx.coroutines.delay
@@ -110,27 +111,29 @@ fun HistoryScreen(
                             key = { it.id }
                         ) { song ->
                             val context = androidx.compose.ui.platform.LocalContext.current
-                            val isCurrentSong = PlayerManager.currentController?.currentMediaItem?.mediaId == song.youtubeId
+                            val controller = PlayerManager.currentController
+                            val songObj = song.toSong()
+                            val isCurrent = controller?.isCurrentSong(songObj) == true
                             
                             var cacheKey by remember { mutableStateOf(0) }
                             
                             SongListItem(
-                                song = song.toSong(),
+                                song = songObj,
                                 onPress = {
-                                    if (isCurrentSong) {
-                                        // Solo abrir el reproductor, sin reiniciar la canción
+                                    if (isCurrent) {
+                                        // Ya está sonando: solo abrir reproductor
                                         onSongClick(song)
                                     } else {
-                                        // Canción diferente: reproducir y abrir reproductor
-                                        PlayerManager.currentController?.playSong(song.toSong())
+                                        // Canción diferente: reproducir sin perder la cola
+                                        controller?.playSongWithoutReplacingQueue(songObj)
                                         onSongClick(song)
                                     }
                                 },
                                 playNext = { 
-                                    PlayerManager.currentController?.addNext(song.toSong(), context) 
+                                    controller?.addNext(songObj, context) 
                                 },
                                 addToQueue = { 
-                                    PlayerManager.currentController?.addToQueue(song.toSong(), context) 
+                                    controller?.addToQueue(songObj, context) 
                                 },
                                 download = { historyViewModel.downloadSong(song) },
                                 delete = { historyViewModel.deleteSong(song) },

@@ -23,7 +23,6 @@ fun Player.shufflePlaylist(playlist: Playlist) {
     playPlaylist(shuffledPlaylist)
 }
 
-
 fun Player.getQueue(): MutableList<Song> {
     val queue = mutableListOf<Song>()
     for (i in 0 until mediaItemCount) {
@@ -36,18 +35,15 @@ fun Player.getQueue(): MutableList<Song> {
 fun Player.addNext(song: Song, context: Context? = null) {
     addMediaItem(currentMediaItemIndex + 1, song.mediaItem)
     if (context != null) {
-        Toast.makeText(context, context.getString(R.string.play_next_toast), Toast.LENGTH_SHORT)
-            .show()
+        Toast.makeText(context, context.getString(R.string.play_next_toast), Toast.LENGTH_SHORT).show()
     }
     playIfQueueCreated()
 }
 
-
 fun Player.addToQueue(song: Song, context: Context? = null) {
     addMediaItem(getQueue().size, song.mediaItem)
     if (context != null) {
-        Toast.makeText(context, context.getString(R.string.added_queue_toast), Toast.LENGTH_SHORT)
-            .show()
+        Toast.makeText(context, context.getString(R.string.added_queue_toast), Toast.LENGTH_SHORT).show()
     }
     playIfQueueCreated()
 }
@@ -57,6 +53,24 @@ fun Player.playSong(song: Song) {
     playIfQueueCreated()
 }
 
+fun Player.playSongWithoutReplacingQueue(song: Song) {
+    val queue = getQueue()
+    val index = queue.indexOfFirst { it.youtubeId == song.youtubeId }
+    
+    if (index >= 0) {
+        // La canción ya está en la cola: saltar a esa posición
+        seekToDefaultPosition(index)
+        play()
+    } else {
+        // La canción no está en la cola: solo reproducir esta canción (reemplaza la cola)
+        setMediaItem(song.mediaItem)
+        playIfQueueCreated()
+    }
+}
+
+fun Player.isCurrentSong(song: Song): Boolean {
+    return currentMediaItem?.mediaId == song.youtubeId
+}
 
 fun Player.clearQueue() {
     stop()
@@ -80,7 +94,6 @@ fun Player.setAudioOffloadEnabled(value: Boolean) {
         TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
     } else {
         TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
-
     }
 
     this.trackSelectionParameters =
