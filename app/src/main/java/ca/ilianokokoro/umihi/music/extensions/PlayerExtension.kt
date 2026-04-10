@@ -49,8 +49,20 @@ fun Player.addToQueue(song: Song, context: Context? = null) {
 }
 
 fun Player.playSong(song: Song) {
-    setMediaItem(song.mediaItem)
-    playIfQueueCreated()
+    val queue = getQueue()
+    val index = queue.indexOfFirst { it.youtubeId == song.youtubeId }
+    
+    if (index >= 0) {
+        // Ya está en la cola: saltar a esa posición (no borra la cola)
+        seekToDefaultPosition(index)
+        play()
+    } else {
+        // No está en la cola: limpiar y poner solo esta canción
+        clearMediaItems()
+        setMediaItem(song.mediaItem)
+        prepare()
+        play()
+    }
 }
 
 fun Player.playSongPreserveQueue(song: Song) {
@@ -58,11 +70,9 @@ fun Player.playSongPreserveQueue(song: Song) {
     val index = queue.indexOfFirst { it.youtubeId == song.youtubeId }
     
     if (index >= 0) {
-        // Ya está en la cola: saltar a esa posición
         seekToDefaultPosition(index)
         play()
     } else {
-        // No está en la cola: añadir al final y saltar a ella
         addMediaItem(song.mediaItem)
         seekToDefaultPosition(mediaItemCount - 1)
         play()

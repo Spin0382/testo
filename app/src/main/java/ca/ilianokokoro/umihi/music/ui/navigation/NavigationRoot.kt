@@ -226,16 +226,8 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                             HistoryScreen(
                                 application = app,
                                 onSongClick = { historySong ->
-                                    val song = ca.ilianokokoro.umihi.music.models.Song(
-                                        youtubeId = historySong.youtubeId,
-                                        title = historySong.title,
-                                        artist = historySong.artist,
-                                        duration = historySong.duration,
-                                        thumbnailHref = historySong.thumbnailHref
-                                    )
-                                    scope.launch {
-                                        PlayerManager.currentController?.playSong(song)
-                                    }
+                                    // SOLO abrir el reproductor, NO reproducir la canción
+                                    // (la canción ya se está reproduciendo desde HistoryScreen si es necesario)
                                     backStack.add(PlayerScreenKey)
                                 }
                             )
