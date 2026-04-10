@@ -1,4 +1,5 @@
 package ca.ilianokokoro.umihi.music.ui.screens.history
+import ca.ilianokokoro.umihi.music.extensions.playSong
 
 import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
