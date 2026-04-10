@@ -145,36 +145,36 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
                 transitionSpec = {
-                    (scaleIn(
+                    (slideInVertically { it }
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                         initialScale = 0.85f
                     ) +
                             fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (scaleOut(
+                            (slideOutVertically { it }
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                                 targetScale = 1.1f
                             ) +
                                     fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
                 },
                 popTransitionSpec = {
-                    (scaleIn(
+                    (slideInVertically { it }
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                         initialScale = 1.1f
                     ) +
                             fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (scaleOut(
+                            (slideOutVertically { it }
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                                 targetScale = 0.85f
                             ) +
                                     fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
                 },
                 predictivePopTransitionSpec = {
-                    (scaleIn(
+                    (slideInVertically { it }
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                         initialScale = 1.1f
                     ) +
                             fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (scaleOut(
+                            (slideOutVertically { it }
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
                                 targetScale = 0.85f
                             ) +

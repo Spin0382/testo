@@ -2,7 +2,6 @@ package ca.ilianokokoro.umihi.music.ui.screens.player
 
 import ca.ilianokokoro.umihi.music.models.Song
 
-
 data class PlayerState(
     val queue: MutableList<Song> = mutableListOf(),
     val currentIndex: Int = -1,
@@ -11,6 +10,7 @@ data class PlayerState(
     val isLoading: Boolean = true,
     val isSeekBarHeld: Boolean = false,
     val isQueueModalShown: Boolean = false,
+    val isMiniPlayerVisible: Boolean = true
 )
 
 data class PlaybackProgress(

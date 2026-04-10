@@ -228,6 +228,14 @@ class PlayerViewModel(application: Application) :
         _uiState.value.queue[_uiState.value.currentIndex] = newSong
     }
 
+    fun setMiniPlayerVisible(visible: Boolean) {
+        viewModelScope.launch {
+            _uiState.update {
+                it.copy(isMiniPlayerVisible = visible)
+            }
+        }
+    }
+
     companion object {
         fun Factory(
             application: Application,

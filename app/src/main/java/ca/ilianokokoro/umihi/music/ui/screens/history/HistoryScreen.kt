@@ -14,6 +14,7 @@ import androidx.compose.material.icons.outlined.History
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -28,6 +30,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.models.HistorySong
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,6 +43,7 @@ fun HistoryScreen(
     historyViewModel: HistoryViewModel = viewModel(factory = HistoryViewModel.Factory(application))
 ) {
     val historySongs by historyViewModel.historySongs.collectAsStateWithLifecycle()
+    val groupedSongs = groupSongsByDate(historySongs)
     
     Scaffold { paddingValues ->
         Column(
@@ -76,23 +83,54 @@ fun HistoryScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 8.dp)
                 ) {
-                    items(
-                        items = historySongs,
-                        key = { it.id }
-                    ) { song ->
-                        SongListItem(
-                            song = song.toSong(),
-                            onPress = { onSongClick(song) },
-                            playNext = { /* TODO */ },
-                            addToQueue = { /* TODO */ },
-                            download = { historyViewModel.downloadSong(song) },
-                            delete = { historyViewModel.deleteSong(song) }
-                        )
+                    groupedSongs.forEach { (dateHeader, songs) ->
+                        item(key = dateHeader) {
+                            Text(
+                                text = dateHeader,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                ),
+                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                            )
+                        }
+                        items(
+                            items = songs,
+                            key = { it.id }
+                        ) { song ->
+                            SongListItem(
+                                song = song.toSong(),
+                                onPress = { onSongClick(song) },
+                                playNext = { /* TODO */ },
+                                addToQueue = { /* TODO */ },
+                                download = { historyViewModel.downloadSong(song) },
+                                delete = { historyViewModel.deleteSong(song) }
+                            )
+                        }
                     }
                 }
             }
         }
     }
+}
+
+private fun groupSongsByDate(songs: List<HistorySong>): List<Pair<String, List<HistorySong>>> {
+    val calendar = Calendar.getInstance()
+    val today = calendar.time
+    calendar.add(Calendar.DAY_OF_YEAR, -1)
+    val yesterday = calendar.time
+    
+    val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+    val dayFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
+    
+    return songs.groupBy { song ->
+        val songDate = Date(song.timestamp)
+        when {
+            dayFormat.format(songDate) == dayFormat.format(today) -> "Hoy"
+            dayFormat.format(songDate) == dayFormat.format(yesterday) -> "Ayer"
+            else -> dateFormat.format(songDate)
+        }
+    }.toList().sortedByDescending { (_, songs) -> songs.first().timestamp }
 }
 
 fun HistorySong.toSong(): ca.ilianokokoro.umihi.music.models.Song {
