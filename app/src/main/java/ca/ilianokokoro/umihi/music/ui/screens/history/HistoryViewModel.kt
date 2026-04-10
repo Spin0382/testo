@@ -1,4 +1,7 @@
 package ca.ilianokokoro.umihi.music.ui.screens.history
+import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
+import java.io.File
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -63,24 +66,276 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     }
     
     fun deleteSong(historySong: HistorySong) {
+ 
+    fun deleteCache(historySong: HistorySong) {
         viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
+        viewModelScope.launch {
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             val song = Song(
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 youtubeId = historySong.youtubeId,
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 title = historySong.title,
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 artist = historySong.artist,
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 duration = historySong.duration,
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 thumbnailHref = historySong.thumbnailHref
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             )
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             if (!song.downloaded) return@launch
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             val playlist = Playlist(
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 info = PlaylistInfo(
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                     id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                     title = "Downloads",
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                     coverHref = ""
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 ),
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
                 songs = listOf(song)
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             )
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
             downloadRepository.deleteSong(playlist, song)
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
+        }
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
+        }
+    }
+    }
+ 
+    fun deleteCache(historySong: HistorySong) {
+        viewModelScope.launch {
+            val audioDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, getApplication().getString(R.string.webm_extension, historySong.youtubeId))
+            if (cachedFile.exists()) {
+                cachedFile.delete()
+            }
+            val imageDir = UmihiHelper.getDownloadDirectory(getApplication(), Constants.Downloads.THUMBNAILS_FOLDER)
+            File(imageDir, getApplication().getString(R.string.jpg_extension, historySong.youtubeId)).delete()
         }
     }
     

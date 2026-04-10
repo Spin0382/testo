@@ -115,7 +115,8 @@ fun SearchScreen(
                                     playNext = { PlayerManager.currentController?.addNext(song, context) },
                                     addToQueue = { PlayerManager.currentController?.addToQueue(song, context) },
                                     download = { searchViewModel.downloadSong(song) },
-                                    delete = { searchViewModel.deleteSong(song) }
+                                    delete = { searchViewModel.deleteSong(song) },
+                                    deleteCache = { searchViewModel.deleteCache(song) }
                                 )
                             }
                         }

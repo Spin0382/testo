@@ -104,7 +104,8 @@ fun HistoryScreen(
                                 playNext = { /* TODO */ },
                                 addToQueue = { /* TODO */ },
                                 download = { historyViewModel.downloadSong(song) },
-                                delete = { historyViewModel.deleteSong(song) }
+                                delete = { historyViewModel.deleteSong(song) },
+                            deleteCache = { historyViewModel.deleteCache(song) }
                             )
                         }
                     }

@@ -101,4 +101,5 @@
     <string name="no_history">No hay canciones en el historial.
 Escucha algo para empezar.</string>
     <string name="clear_history">Limpiar historial</string>
+    <string name="delete_cache">Eliminar caché</string>
 </resources>

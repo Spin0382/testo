@@ -1,5 +1,6 @@
 package ca.ilianokokoro.umihi.music.ui.components.song
 
+import android.content.Context
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
 import androidx.compose.material.icons.rounded.Delete
+import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.MoreVert
@@ -28,12 +30,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ca.ilianokokoro.umihi.music.R
+import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 import ca.ilianokokoro.umihi.music.ui.components.dropdown.ModernDropdownItem
+import java.io.File
 
 @Composable
 fun SongListItem(
@@ -43,9 +49,18 @@ fun SongListItem(
     addToQueue: () -> Unit,
     modifier: Modifier = Modifier,
     download: (() -> Unit)? = null,
-    delete: (() -> Unit)? = null
+    delete: (() -> Unit)? = null,
+    deleteCache: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    
+    // Verificar si existe en auto-caché (archivo pero no en BD)
+    val isCached = remember(song) {
+        val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
+        val cachedFile = File(audioDir, context.getString(R.string.webm_extension, song.youtubeId))
+        cachedFile.exists() && !song.downloaded
+    }
 
     Box {
         ListItem(
@@ -74,6 +89,14 @@ fun SongListItem(
                                 .size(16.dp),
                             imageVector = Icons.Rounded.DownloadForOffline,
                             contentDescription = stringResource(R.string.download),
+                        )
+                    } else if (isCached) {
+                        Icon(
+                            modifier = modifier
+                                .padding(end = 3.dp)
+                                .size(16.dp),
+                            imageVector = Icons.Rounded.DownloadForOffline,
+                            contentDescription = "Cached",
                         )
                     }
                     Text(
@@ -125,6 +148,16 @@ fun SongListItem(
                                 text = stringResource(R.string.delete_download),
                                 onClick = {
                                     delete()
+                                    expanded = false
+                                }
+                            )
+                        }
+                        if (deleteCache != null && isCached) {
+                            ModernDropdownItem(
+                                leadingIcon = Icons.Outlined.Delete,
+                                text = "Eliminar caché",
+                                onClick = {
+                                    deleteCache()
                                     expanded = false
                                 }
                             )
