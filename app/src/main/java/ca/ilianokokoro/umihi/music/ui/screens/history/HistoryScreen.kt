@@ -16,7 +16,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,28 +38,25 @@ fun HistoryScreen(
 ) {
     val historySongs by historyViewModel.historySongs.collectAsStateWithLifecycle()
     
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(R.string.history)) },
-                actions = {
-                    if (historySongs.isNotEmpty()) {
-                        IconButton(onClick = { historyViewModel.clearHistory() }) {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = stringResource(R.string.clear_history)
-                            )
-                        }
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
+    Scaffold { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // Botón de limpiar en la parte superior derecha
+            if (historySongs.isNotEmpty()) {
+                IconButton(
+                    onClick = { historyViewModel.clearHistory() },
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Icon(
+                        Icons.Outlined.Delete,
+                        contentDescription = stringResource(R.string.clear_history)
+                    )
+                }
+            }
+            
             if (historySongs.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),

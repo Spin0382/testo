@@ -171,7 +171,12 @@ class PlaybackService : MediaSessionService() {
         
         serviceScope.launch {
             try {
-                // Si no hay artworkUri en el MediaItem, intentar obtenerlo de la BD
+                val todayEntry = database.historyDao().getTodayEntry(songId)
+                if (todayEntry != null) {
+                    UmihiHelper.printd("Song already in history today: $title")
+                    return@launch
+                }
+                
                 var finalThumbnailUrl = thumbnailUrl
                 if (finalThumbnailUrl.isBlank()) {
                     val localSong = database.songRepository().getSong(songId)
@@ -186,7 +191,7 @@ class PlaybackService : MediaSessionService() {
                     thumbnailHref = finalThumbnailUrl
                 )
                 database.historyDao().insert(historySong)
-                UmihiHelper.printd("Saved to history: $title with thumbnail: $finalThumbnailUrl")
+                UmihiHelper.printd("Saved to history: $title")
             } catch (e: Exception) {
                 printe("Failed to save to history: ${e.message}")
             }
