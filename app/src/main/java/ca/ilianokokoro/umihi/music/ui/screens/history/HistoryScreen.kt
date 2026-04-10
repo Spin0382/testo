@@ -36,7 +36,7 @@ import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.extensions.addNext
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.extensions.isCurrentSong
-import ca.ilianokokoro.umihi.music.extensions.playSongWithoutReplacingQueue
+import ca.ilianokokoro.umihi.music.extensions.playSongPreserveQueue
 import ca.ilianokokoro.umihi.music.models.HistorySong
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
 import kotlinx.coroutines.delay
@@ -125,7 +125,7 @@ fun HistoryScreen(
                                         onSongClick(song)
                                     } else {
                                         // Canción diferente: reproducir sin perder la cola
-                                        controller?.playSongWithoutReplacingQueue(songObj)
+                                        controller?.playSongPreserveQueue(songObj)
                                         onSongClick(song)
                                     }
                                 },

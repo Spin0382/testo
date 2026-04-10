@@ -20,4 +20,7 @@ interface HistoryDao {
     
     @Query("DELETE FROM history WHERE youtubeId = :youtubeId")
     suspend fun deleteByYoutubeId(youtubeId: String)
+    
+    @Query("SELECT * FROM history WHERE youtubeId = :youtubeId AND date(timestamp/1000, 'unixepoch') = date('now')")
+    suspend fun getTodayEntry(youtubeId: String): HistorySong?
 }

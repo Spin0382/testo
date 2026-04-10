@@ -53,18 +53,19 @@ fun Player.playSong(song: Song) {
     playIfQueueCreated()
 }
 
-fun Player.playSongWithoutReplacingQueue(song: Song) {
+fun Player.playSongPreserveQueue(song: Song) {
     val queue = getQueue()
     val index = queue.indexOfFirst { it.youtubeId == song.youtubeId }
     
     if (index >= 0) {
-        // La canción ya está en la cola: saltar a esa posición
+        // Ya está en la cola: saltar a esa posición
         seekToDefaultPosition(index)
         play()
     } else {
-        // La canción no está en la cola: solo reproducir esta canción (reemplaza la cola)
-        setMediaItem(song.mediaItem)
-        playIfQueueCreated()
+        // No está en la cola: añadir al final y saltar a ella
+        addMediaItem(song.mediaItem)
+        seekToDefaultPosition(mediaItemCount - 1)
+        play()
     }
 }
 

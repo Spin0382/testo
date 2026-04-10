@@ -177,6 +177,13 @@ class PlaybackService : MediaSessionService() {
         
         serviceScope.launch {
             try {
+                // Solo verificar si ya existe HOY
+                val todayEntry = database.historyDao().getTodayEntry(songId)
+                if (todayEntry != null) {
+                    UmihiHelper.printd("Song already in history today: $title")
+                    return@launch
+                }
+                
                 var finalThumbnailUrl = thumbnailUrl
                 if (finalThumbnailUrl.isBlank()) {
                     val localSong = database.songRepository().getSong(songId)
