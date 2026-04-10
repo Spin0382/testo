@@ -47,10 +47,8 @@ import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
 fun SearchScreen(
     application: Application,
     searchViewModel: SearchViewModel = viewModel(
-        factory =
-            SearchViewModel.Factory(application = application)
+        factory = SearchViewModel.Factory(application = application)
     )
-
 ) {
     val uiState = searchViewModel.uiState.collectAsStateWithLifecycle().value
 
@@ -65,8 +63,7 @@ fun SearchScreen(
     }
 
     Column(
-        modifier = Modifier
-            .fillMaxSize(),
+        modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.SpaceBetween
     ) {
@@ -82,12 +79,8 @@ fun SearchScreen(
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
                 value = uiState.search,
-                onValueChange = {
-                    searchViewModel.onSearchFieldChange(it)
-                },
-                label = {
-                    Text(text = stringResource(R.string.search))
-                },
+                onValueChange = { searchViewModel.onSearchFieldChange(it) },
+                label = { Text(text = stringResource(R.string.search)) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Search,
@@ -102,10 +95,7 @@ fun SearchScreen(
             )
 
             when (uiState.screenState) {
-                ScreenState.Loading -> {
-                    LoadingAnimation()
-                }
-
+                ScreenState.Loading -> LoadingAnimation()
                 is ScreenState.Success -> {
                     val songs = uiState.screenState.results
                     if (songs.isNotEmpty()) {
@@ -113,45 +103,33 @@ fun SearchScreen(
                             verticalArrangement = Arrangement.Top,
                             horizontalAlignment = Alignment.CenterHorizontally,
                             contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING),
-                            modifier = Modifier
-                                .fillMaxSize()
+                            modifier = Modifier.fillMaxSize()
                         ) {
                             items(
                                 items = songs,
-                                key = { song ->
-                                    song.uid
-                                }) {
+                                key = { song -> song.uid }
+                            ) { song ->
                                 SongListItem(
-                                    song = it,
-                                    onPress = {
-                                        PlayerManager.currentController?.playSong(it)
-                                    },
-                                    playNext = {
-                                        PlayerManager.currentController?.addNext(it, context)
-                                    },
-                                    addToQueue = {
-                                        PlayerManager.currentController?.addToQueue(it, context)
-                                    }
+                                    song = song,
+                                    onPress = { PlayerManager.currentController?.playSong(song) },
+                                    playNext = { PlayerManager.currentController?.addNext(song, context) },
+                                    addToQueue = { PlayerManager.currentController?.addToQueue(song, context) },
+                                    download = { searchViewModel.downloadSong(song) },
+                                    delete = { searchViewModel.deleteSong(song) }
                                 )
                             }
                         }
                     } else {
                         Column(
-                            modifier = Modifier
-                                .fillMaxSize(),
+                            modifier = Modifier.fillMaxSize(),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
-
                         ) {
                             Text(stringResource(R.string.no_results))
                         }
                     }
                 }
             }
-
         }
-
     }
-
 }
-

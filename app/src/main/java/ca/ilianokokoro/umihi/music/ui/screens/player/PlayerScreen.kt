@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,15 +50,13 @@ fun PlayerScreen(
     modifier: Modifier = Modifier,
     application: Application,
     playerViewModel: PlayerViewModel = viewModel(
-        factory =
-            PlayerViewModel.Factory(application = application)
+        factory = PlayerViewModel.Factory(application = application)
     )
 ) {
     val uiState = playerViewModel.uiState.collectAsStateWithLifecycle().value
     val orientation = LocalConfiguration.current.orientation
     val currentSong = uiState.queue.getOrNull(uiState.currentIndex)
 
-    // Close the screen in resumed with an empty queue
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -68,90 +68,87 @@ fun PlayerScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-
-    if (orientation == Configuration.ORIENTATION_PORTRAIT) {
-        Column(
-            modifier = modifier
-                .padding(8.dp)
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.background),
-
-            horizontalAlignment = Alignment.CenterHorizontally
-
-        ) {
-            Thumbnail(
-                href = currentSong?.thumbnailHref.toString(),
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(1f)
-            )
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .pointerInput(Unit) {
+                detectVerticalDragGestures { _, dragAmount ->
+                    if (dragAmount > 100) {
+                        onBack()
+                    }
+                }
+            }
+    ) {
+        if (orientation == Configuration.ORIENTATION_PORTRAIT) {
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .padding(horizontal = 8.dp),
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(8.dp)
+                    .fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                SongInfo(currentSong)
-                PlayerControls(
-                    isPlaying = uiState.isPlaying,
-                    isLoading = uiState.isLoading,
-                    progress = uiState.playbackProgress,
-                    onSeek = playerViewModel::seek,
-                    onSeekPlayer = playerViewModel::seekPlayer,
-                    onUpdateSeekBarHeldState = playerViewModel::updateSeekBarHeldState,
-                    onOpenQueue = {
-                        playerViewModel.setQueueVisibility(true)
-                    }
+                Thumbnail(
+                    href = currentSong?.thumbnailHref.toString(),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f)
                 )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .padding(horizontal = 8.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    SongInfo(currentSong)
+                    PlayerControls(
+                        isPlaying = uiState.isPlaying,
+                        isLoading = uiState.isLoading,
+                        progress = uiState.playbackProgress,
+                        onSeek = playerViewModel::seek,
+                        onSeekPlayer = playerViewModel::seekPlayer,
+                        onUpdateSeekBarHeldState = playerViewModel::updateSeekBarHeldState,
+                        onOpenQueue = { playerViewModel.setQueueVisibility(true) }
+                    )
+                }
+            }
+        } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            Row(
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Thumbnail(
+                    href = currentSong?.thumbnailHref.toString(),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f)
+                )
+                Column(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f)
+                        .padding(horizontal = 32.dp),
+                    verticalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    SongInfo(currentSong)
+                    PlayerControls(
+                        isPlaying = uiState.isPlaying,
+                        isLoading = uiState.isLoading,
+                        progress = uiState.playbackProgress,
+                        onSeek = playerViewModel::seek,
+                        onSeekPlayer = playerViewModel::seekPlayer,
+                        onUpdateSeekBarHeldState = playerViewModel::updateSeekBarHeldState,
+                        onOpenQueue = { playerViewModel.setQueueVisibility(true) }
+                    )
+                }
             }
         }
-
-    } else if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
-        Row(
-            modifier = modifier
-                .padding(8.dp)
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceEvenly
-
-        ) {
-
-            Thumbnail(
-                href = currentSong?.thumbnailHref.toString(),
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(1f)
-            )
-
-            Column(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .weight(1f)
-                    .padding(horizontal = 32.dp),
-                verticalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SongInfo(currentSong)
-                PlayerControls(
-                    isPlaying = uiState.isPlaying,
-                    isLoading = uiState.isLoading,
-                    progress = uiState.playbackProgress,
-                    onSeek = playerViewModel::seek,
-                    onSeekPlayer = playerViewModel::seekPlayer,
-                    onUpdateSeekBarHeldState = playerViewModel::updateSeekBarHeldState,
-                    onOpenQueue = {
-                        playerViewModel.setQueueVisibility(true)
-                    }
-                )
-            }
-
-        }
-
     }
 
-
-    // Queue
     if (uiState.isQueueModalShown) {
         QueueBottomSheet(
             changeVisibility = { playerViewModel.setQueueVisibility(it) },
@@ -162,36 +159,23 @@ fun PlayerScreen(
 }
 
 @Composable
-fun Thumbnail(
-    href: String,
-    modifier: Modifier = Modifier
-) {
+fun Thumbnail(href: String, modifier: Modifier = Modifier) {
     BoxWithConstraints(
         modifier = modifier.padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
         val size = minOf(maxWidth, maxHeight)
-
         AnimatedContent(
             targetState = href,
             transitionSpec = {
-                fadeIn(
-                    animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY)
-                ).togetherWith(
-                    fadeOut(
-                        animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY)
-                    )
-                )
+                fadeIn(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY))
+                    .togetherWith(fadeOut(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY)))
             }
         ) { targetState ->
-            SquareImage(
-                uri = targetState,
-                modifier = Modifier.size(size)
-            )
+            SquareImage(uri = targetState, modifier = Modifier.size(size))
         }
     }
 }
-
 
 @Composable
 fun SongInfo(song: Song?) {

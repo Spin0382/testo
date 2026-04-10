@@ -44,7 +44,6 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Botón de limpiar en la parte superior derecha
             if (historySongs.isNotEmpty()) {
                 IconButton(
                     onClick = { historyViewModel.clearHistory() },
@@ -86,8 +85,8 @@ fun HistoryScreen(
                             onPress = { onSongClick(song) },
                             playNext = { /* TODO */ },
                             addToQueue = { /* TODO */ },
-                            download = null,
-                            delete = { historyViewModel.deleteFromHistory(song) }
+                            download = { historyViewModel.downloadSong(song) },
+                            delete = { historyViewModel.deleteSong(song) }
                         )
                     }
                 }

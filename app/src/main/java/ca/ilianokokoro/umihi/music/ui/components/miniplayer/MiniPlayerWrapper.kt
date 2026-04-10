@@ -3,6 +3,7 @@ package ca.ilianokokoro.umihi.music.ui.components.miniplayer
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.MediaItem
@@ -24,11 +26,12 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.extensions.toSong
 
-
 @Composable
 fun MiniPlayerWrapper(
     modifier: Modifier = Modifier,
     onMiniPlayerPressed: () -> Unit,
+    onSwipeUp: () -> Unit,
+    onSwipeDown: () -> Unit,
     showMiniPlayer: Boolean
 ) {
     val player = PlayerManager.currentController
@@ -56,22 +59,9 @@ fun MiniPlayerWrapper(
                 songIsPlaying = isPlaying
             }
 
-
             override fun onPlaybackStateChanged(playbackState: Int) {
-                when (playbackState) {
-                    Player.STATE_BUFFERING -> {
-                        songIsLoading = true
-                    }
-
-                    Player.STATE_READY -> {
-                        songIsLoading = false
-                    }
-
-                    else -> {
-                    }
-                }
+                songIsLoading = playbackState == Player.STATE_BUFFERING
             }
-
         }
         player?.addListener(listener)
         onDispose { player?.removeListener(listener) }
@@ -85,24 +75,30 @@ fun MiniPlayerWrapper(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .height(Constants.Ui.MiniPlayer.HEIGHT)
+            .pointerInput(Unit) {
+                detectVerticalDragGestures(
+                    onDragEnd = {
+                        // Swipe hacia arriba -> abrir reproductor
+                        // Swipe hacia abajo -> cerrar mini player
+                    },
+                    onVerticalDrag = { _, dragAmount ->
+                        if (dragAmount < -50) {
+                            onSwipeUp()
+                        } else if (dragAmount > 50) {
+                            onSwipeDown()
+                        }
+                    }
+                )
+            }
     ) {
         MiniPlayer(
             currentSong = currentSong!!,
             onClick = onMiniPlayerPressed,
             onPlayPause = {
-                if (player?.isPlaying == true) {
-                    player.pause()
-                } else {
-                    player?.play()
-                }
-
+                if (player?.isPlaying == true) player?.pause() else player?.play()
             },
-            onSkipNext = {
-                player?.seekToNext()
-            },
-            onSkipPrevious = {
-                player?.seekToPrevious()
-            },
+            onSkipNext = { player?.seekToNext() },
+            onSkipPrevious = { player?.seekToPrevious() },
             isPlaying = songIsPlaying == true,
             isLoading = songIsLoading
         )
