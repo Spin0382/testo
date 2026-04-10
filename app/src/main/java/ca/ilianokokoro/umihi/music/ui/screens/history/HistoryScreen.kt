@@ -19,6 +19,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -28,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
+import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.extensions.addNext
+import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.models.HistorySong
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
 import java.text.SimpleDateFormat
@@ -44,6 +50,7 @@ fun HistoryScreen(
 ) {
     val historySongs by historyViewModel.historySongs.collectAsStateWithLifecycle()
     val groupedSongs = groupSongsByDate(historySongs)
+    var refreshTrigger by remember { mutableStateOf(0) }
     
     Scaffold { paddingValues ->
         Column(
@@ -98,14 +105,27 @@ fun HistoryScreen(
                             items = songs,
                             key = { it.id }
                         ) { song ->
+                            val context = androidx.compose.ui.platform.LocalContext.current
+                            val isCurrentSong = PlayerManager.currentController?.currentMediaItem?.mediaId == song.youtubeId
+                            
                             SongListItem(
                                 song = song.toSong(),
-                                onPress = { onSongClick(song) },
-                                playNext = { },
-                                addToQueue = { },
+                                onPress = {
+                                    if (isCurrentSong) {
+                                        onSongClick(song)
+                                    } else {
+                                        PlayerManager.currentController?.playSong(song.toSong())
+                                        onSongClick(song)
+                                    }
+                                },
+                                playNext = { PlayerManager.currentController?.addNext(song.toSong(), context) },
+                                addToQueue = { PlayerManager.currentController?.addToQueue(song.toSong(), context) },
                                 download = { historyViewModel.downloadSong(song) },
                                 delete = { historyViewModel.deleteSong(song) },
-                                deleteCache = { historyViewModel.deleteCache(song) }
+                                deleteCache = {
+                                    historyViewModel.deleteCache(song)
+                                    refreshTrigger++
+                                }
                             )
                         }
                     }

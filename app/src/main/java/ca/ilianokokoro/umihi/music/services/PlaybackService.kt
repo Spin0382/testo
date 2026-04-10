@@ -2,6 +2,7 @@ package ca.ilianokokoro.umihi.music.services
 
 import android.app.PendingIntent
 import android.net.Uri
+import android.os.Bundle
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.media3.common.AudioAttributes
@@ -11,6 +12,8 @@ import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.common.Player.COMMAND_GET_TIMELINE
+import androidx.media3.common.Player.COMMAND_SEEK_TO_NEXT
+import androidx.media3.common.Player.COMMAND_SEEK_TO_PREVIOUS
 import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.common.util.Util
@@ -23,6 +26,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import androidx.media3.session.SessionResult
 import ca.ilianokokoro.umihi.music.core.ApiResult
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.ExoCache
@@ -34,6 +38,7 @@ import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.extensions.cappedTo
 import ca.ilianokokoro.umihi.music.models.HistorySong
+import com.google.common.util.concurrent.ListenableFuture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -130,10 +135,11 @@ class PlaybackService : MediaSessionService() {
                     session: MediaSession,
                     controller: MediaSession.ControllerInfo
                 ): MediaSession.ConnectionResult {
-                    val commands =
-                        MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
-                            .add(COMMAND_GET_TIMELINE)
-                            .build()
+                    val commands = MediaSession.ConnectionResult.DEFAULT_PLAYER_COMMANDS.buildUpon()
+                        .add(COMMAND_GET_TIMELINE)
+                        .add(COMMAND_SEEK_TO_PREVIOUS)
+                        .add(COMMAND_SEEK_TO_NEXT)
+                        .build()
 
                     return MediaSession.ConnectionResult.AcceptedResultBuilder(session)
                         .setAvailablePlayerCommands(commands)
