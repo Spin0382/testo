@@ -118,8 +118,10 @@ fun HistoryScreen(
                                 song = song.toSong(),
                                 onPress = {
                                     if (isCurrentSong) {
+                                        // Solo abrir el reproductor, sin reiniciar la canción
                                         onSongClick(song)
                                     } else {
+                                        // Canción diferente: reproducir y abrir reproductor
                                         PlayerManager.currentController?.playSong(song.toSong())
                                         onSongClick(song)
                                     }

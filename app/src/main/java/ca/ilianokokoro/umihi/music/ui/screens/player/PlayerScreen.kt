@@ -111,8 +111,8 @@ fun PlayerScreen(
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f),
-                    onTapLeft = { playerViewModel.skipBackward(10000) },
-                    onTapRight = { playerViewModel.skipForward(10000) }
+                    onDoubleTapLeft = { playerViewModel.skipBackward(10000) },
+                    onDoubleTapRight = { playerViewModel.skipForward(10000) }
                 )
                 Column(
                     modifier = Modifier
@@ -147,8 +147,8 @@ fun PlayerScreen(
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f),
-                    onTapLeft = { playerViewModel.skipBackward(10000) },
-                    onTapRight = { playerViewModel.skipForward(10000) }
+                    onDoubleTapLeft = { playerViewModel.skipBackward(10000) },
+                    onDoubleTapRight = { playerViewModel.skipForward(10000) }
                 )
                 Column(
                     modifier = Modifier
@@ -185,8 +185,8 @@ fun PlayerScreen(
 fun Thumbnail(
     href: String,
     modifier: Modifier = Modifier,
-    onTapLeft: () -> Unit = {},
-    onTapRight: () -> Unit = {}
+    onDoubleTapLeft: () -> Unit = {},
+    onDoubleTapRight: () -> Unit = {}
 ) {
     BoxWithConstraints(
         modifier = modifier.padding(20.dp),
@@ -197,13 +197,15 @@ fun Thumbnail(
             modifier = Modifier
                 .size(size)
                 .pointerInput(Unit) {
-                    detectTapGestures { offset ->
-                        if (offset.x < size.value / 3) {
-                            onTapLeft()
-                        } else if (offset.x > size.value * 2 / 3) {
-                            onTapRight()
+                    detectTapGestures(
+                        onDoubleTap = { offset ->
+                            if (offset.x < size.value / 3) {
+                                onDoubleTapLeft()
+                            } else if (offset.x > size.value * 2 / 3) {
+                                onDoubleTapRight()
+                            }
                         }
-                    }
+                    )
                 }
         ) {
             AnimatedContent(
