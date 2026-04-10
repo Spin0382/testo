@@ -101,11 +101,11 @@ fun HistoryScreen(
                             SongListItem(
                                 song = song.toSong(),
                                 onPress = { onSongClick(song) },
-                                playNext = { /* TODO */ },
-                                addToQueue = { /* TODO */ },
+                                playNext = { },
+                                addToQueue = { },
                                 download = { historyViewModel.downloadSong(song) },
                                 delete = { historyViewModel.deleteSong(song) },
-                            deleteCache = { historyViewModel.deleteCache(song) }
+                                deleteCache = { historyViewModel.deleteCache(song) }
                             )
                         }
                     }

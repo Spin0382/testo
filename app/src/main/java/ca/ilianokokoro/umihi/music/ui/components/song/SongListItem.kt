@@ -12,8 +12,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.PlaylistPlay
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.DeleteOutline
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.MoreVert
@@ -55,7 +55,6 @@ fun SongListItem(
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
     
-    // Verificar si existe en auto-caché (archivo pero no en BD)
     val isCached = remember(song) {
         val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
         val cachedFile = File(audioDir, context.getString(R.string.webm_extension, song.youtubeId))
@@ -82,21 +81,13 @@ fun SongListItem(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = modifier.fillMaxHeight()
                 ) {
-                    if (song.downloaded) {
+                    if (song.downloaded || isCached) {
                         Icon(
                             modifier = modifier
                                 .padding(end = 3.dp)
                                 .size(16.dp),
                             imageVector = Icons.Rounded.DownloadForOffline,
                             contentDescription = stringResource(R.string.download),
-                        )
-                    } else if (isCached) {
-                        Icon(
-                            modifier = modifier
-                                .padding(end = 3.dp)
-                                .size(16.dp),
-                            imageVector = Icons.Rounded.DownloadForOffline,
-                            contentDescription = "Cached",
                         )
                     }
                     Text(
@@ -155,7 +146,7 @@ fun SongListItem(
                         if (deleteCache != null && isCached) {
                             ModernDropdownItem(
                                 leadingIcon = Icons.Outlined.Delete,
-                                text = "Eliminar caché",
+                                text = stringResource(R.string.delete_cache),
                                 onClick = {
                                     deleteCache()
                                     expanded = false
