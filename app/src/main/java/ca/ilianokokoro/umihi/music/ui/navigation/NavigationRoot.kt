@@ -5,8 +5,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
@@ -145,40 +143,34 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                     rememberViewModelStoreNavEntryDecorator(),
                 ),
                 transitionSpec = {
-                    (slideInVertically { it }
+                    (slideInVertically(
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                        initialScale = 0.85f
-                    ) +
-                            fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (slideOutVertically { it }
+                        initialOffsetY = { it }
+                    ) + fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
+                            (slideOutVertically(
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                                targetScale = 1.1f
-                            ) +
-                                    fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
+                                targetOffsetY = { -it }
+                            ) + fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
                 },
                 popTransitionSpec = {
-                    (slideInVertically { it }
+                    (slideInVertically(
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                        initialScale = 1.1f
-                    ) +
-                            fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (slideOutVertically { it }
+                        initialOffsetY = { -it }
+                    ) + fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
+                            (slideOutVertically(
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                                targetScale = 0.85f
-                            ) +
-                                    fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
+                                targetOffsetY = { it }
+                            ) + fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
                 },
                 predictivePopTransitionSpec = {
-                    (slideInVertically { it }
+                    (slideInVertically(
                         animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                        initialScale = 1.1f
-                    ) +
-                            fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
-                            (slideOutVertically { it }
+                        initialOffsetY = { -it }
+                    ) + fadeIn(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION))) togetherWith
+                            (slideOutVertically(
                                 animationSpec = tween(Constants.Animation.NAVIGATION_DURATION),
-                                targetScale = 0.85f
-                            ) +
-                                    fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
+                                targetOffsetY = { it }
+                            ) + fadeOut(animationSpec = tween(Constants.Animation.NAVIGATION_DURATION)))
                 },
                 entryProvider = { key ->
                     when (key) {
