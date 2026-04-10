@@ -107,6 +107,8 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                 MiniPlayerWrapper(
                     showMiniPlayer = screenConfig.showMiniPlayer,
                     onMiniPlayerPressed = { backStack.add(PlayerScreenKey) },
+                    onSwipeUp = { backStack.add(PlayerScreenKey) },
+                    onSwipeDown = { if (backStack.last() is PlayerScreenKey) backStack.safePop() },
                     modifier = miniPlayerModifier
                 )
 
