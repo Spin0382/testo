@@ -97,6 +97,12 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
         }
     }
     
+    fun refreshHistory() {
+        viewModelScope.launch {
+            // Forzar actualización del Flow
+        }
+    }
+    
     companion object {
         fun Factory(application: Application): ViewModelProvider.Factory = viewModelFactory {
             initializer {

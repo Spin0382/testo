@@ -1,6 +1,5 @@
 package ca.ilianokokoro.umihi.music.ui.screens.player
 
-
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -57,7 +56,6 @@ class PlayerViewModel(application: Application) :
         updateIsPlayingState()
     }
 
-
     fun seekPlayer() {
         PlayerManager.currentController?.seekTo(_uiState.value.playbackProgress.position.toLong())
     }
@@ -75,12 +73,23 @@ class PlayerViewModel(application: Application) :
         }
     }
 
+    fun skipForward(amountMs: Long = 10000) {
+        val controller = PlayerManager.currentController ?: return
+        val newPosition = (controller.currentPosition + amountMs).coerceAtMost(controller.duration)
+        controller.seekTo(newPosition)
+    }
+
+    fun skipBackward(amountMs: Long = 10000) {
+        val controller = PlayerManager.currentController ?: return
+        val newPosition = (controller.currentPosition - amountMs).coerceAtLeast(0)
+        controller.seekTo(newPosition)
+    }
+
     fun updateSeekBarHeldState(isHeld: Boolean) {
         viewModelScope.launch {
             if (_uiState.value.isSeekBarHeld == isHeld) {
                 return@launch
             }
-
 
             _uiState.update {
                 _uiState.value.copy(
@@ -103,7 +112,6 @@ class PlayerViewModel(application: Application) :
     private val currentSong: Song?
         get() = _uiState.value.queue.getOrNull(_uiState.value.currentIndex)
 
-
     private fun updateCurrentSong() {
         val newIndex = PlayerManager.currentController?.currentMediaItemIndex ?: return
         if (newIndex == lastUpdatedSongIndex) {
@@ -111,12 +119,10 @@ class PlayerViewModel(application: Application) :
         }
         lastUpdatedSongIndex = newIndex
 
-
         viewModelScope.launch {
             resetState()
             updateQueue()
         }
-
     }
 
     private fun updateQueue() {
@@ -187,8 +193,7 @@ class PlayerViewModel(application: Application) :
                     }
                 }
 
-                else -> {
-                }
+                else -> {}
             }
         }
     }
@@ -202,7 +207,6 @@ class PlayerViewModel(application: Application) :
             }
         }
     }
-
 
     private fun resetState() {
         viewModelScope.launch {

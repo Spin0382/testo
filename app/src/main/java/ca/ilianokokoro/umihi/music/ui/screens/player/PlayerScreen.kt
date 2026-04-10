@@ -11,8 +11,10 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
@@ -39,10 +42,13 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 import ca.ilianokokoro.umihi.music.ui.screens.player.components.PlayerControls
 import ca.ilianokokoro.umihi.music.ui.screens.player.components.QueueBottomSheet
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun PlayerScreen(
@@ -68,16 +74,29 @@ fun PlayerScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Variable para evitar múltiples onBack
+    val canGoBack = remember { androidx.compose.runtime.mutableStateOf(true) }
+
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .pointerInput(Unit) {
-                detectVerticalDragGestures { _, dragAmount ->
-                    if (dragAmount > 100) {
-                        onBack()
+                detectVerticalDragGestures(
+                    onDragStart = { },
+                    onDragEnd = { },
+                    onDragCancel = { },
+                    onVerticalDrag = { _, dragAmount ->
+                        if (dragAmount > 100 && canGoBack.value) {
+                            canGoBack.value = false
+                            onBack()
+                            launch {
+                                delay(500)
+                                canGoBack.value = true
+                            }
+                        }
                     }
-                }
+                )
             }
     ) {
         if (orientation == Configuration.ORIENTATION_PORTRAIT) {
@@ -91,7 +110,9 @@ fun PlayerScreen(
                     href = currentSong?.thumbnailHref.toString(),
                     modifier = Modifier
                         .fillMaxHeight()
-                        .weight(1f)
+                        .weight(1f),
+                    onTapLeft = { playerViewModel.skipBackward(10000) },
+                    onTapRight = { playerViewModel.skipForward(10000) }
                 )
                 Column(
                     modifier = Modifier
@@ -125,7 +146,9 @@ fun PlayerScreen(
                     href = currentSong?.thumbnailHref.toString(),
                     modifier = Modifier
                         .fillMaxHeight()
-                        .weight(1f)
+                        .weight(1f),
+                    onTapLeft = { playerViewModel.skipBackward(10000) },
+                    onTapRight = { playerViewModel.skipForward(10000) }
                 )
                 Column(
                     modifier = Modifier
@@ -159,20 +182,39 @@ fun PlayerScreen(
 }
 
 @Composable
-fun Thumbnail(href: String, modifier: Modifier = Modifier) {
+fun Thumbnail(
+    href: String,
+    modifier: Modifier = Modifier,
+    onTapLeft: () -> Unit = {},
+    onTapRight: () -> Unit = {}
+) {
     BoxWithConstraints(
         modifier = modifier.padding(20.dp),
         contentAlignment = Alignment.Center
     ) {
         val size = minOf(maxWidth, maxHeight)
-        AnimatedContent(
-            targetState = href,
-            transitionSpec = {
-                fadeIn(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY))
-                    .togetherWith(fadeOut(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY)))
+        Box(
+            modifier = Modifier
+                .size(size)
+                .pointerInput(Unit) {
+                    detectTapGestures { offset ->
+                        if (offset.x < size.value / 3) {
+                            onTapLeft()
+                        } else if (offset.x > size.value * 2 / 3) {
+                            onTapRight()
+                        }
+                    }
+                }
+        ) {
+            AnimatedContent(
+                targetState = href,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY))
+                        .togetherWith(fadeOut(animationSpec = tween(Constants.Player.IMAGE_TRANSITION_DELAY)))
+                }
+            ) { targetState ->
+                SquareImage(uri = targetState, modifier = Modifier.matchParentSize())
             }
-        ) { targetState ->
-            SquareImage(uri = targetState, modifier = Modifier.size(size))
         }
     }
 }
