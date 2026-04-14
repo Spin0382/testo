@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name" translatable="false">Umihi Music</string>
     <string name="playlists">Listas de reproducción</string>
     <string name="settings">Ajustes</string>
     <string name="back_description">Pantalla anterior</string>
@@ -26,7 +27,9 @@
     <string name="view_details">Ver detalles</string>
     <string name="error_log">Registro de errores</string>
     <string name="login_success">Sesión iniciada correctamente</string>
+    <string name="empty" translatable="false" />
     <string name="download">Descargar</string>
+    <string name="dot" translatable="false">•</string>
     <string name="open_settings">Abrir ajustes</string>
     <string name="more">Más opciones</string>
     <string name="join_discord_server">Únete al servidor de Discord</string>
@@ -69,6 +72,8 @@
     <string name="change_update_channel">Cambiar canal de actualizaciones</string>
     <string name="current_update_channel_body">Canal actual: %1$s</string>
     <string name="delete_download">Eliminar descarga</string>
+    <string name="webm_extension" translatable="false">%1$s.webm</string>
+    <string name="jpg_extension" translatable="false">%1$s.jpg</string>
     <string name="beta_update_available">Actualización beta disponible</string>
     <string name="home">Inicio</string>
     <string name="search">Buscar</string>
