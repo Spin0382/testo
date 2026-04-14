@@ -98,8 +98,10 @@
     <string name="wifi_only_title">Descargar solo con WiFi</string>
     <string name="wifi_only_subtitle">Evita usar datos móviles para descargas automáticas</string>
     <string name="history">Historial</string>
-    <string name="no_history">No hay canciones en el historial.
-Escucha algo para empezar.</string>
+    <string name="no_history">No hay canciones en el historial.\nEscucha algo para empezar.</string>
     <string name="clear_history">Limpiar historial</string>
     <string name="delete_cache">Eliminar caché</string>
+    <string name="auto_cache_title">Auto-caché</string>
+    <string name="auto_cache_subtitle">Descargar automáticamente al escuchar</string>
+    <string name="remove_from_history">Eliminar del historial</string>
 </resources>

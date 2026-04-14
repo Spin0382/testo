@@ -50,7 +50,8 @@ fun SongListItem(
     modifier: Modifier = Modifier,
     download: (() -> Unit)? = null,
     delete: (() -> Unit)? = null,
-    deleteCache: (() -> Unit)? = null
+    deleteCache: (() -> Unit)? = null,
+    deleteFromHistory: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -149,6 +150,16 @@ fun SongListItem(
                                 text = stringResource(R.string.delete_cache),
                                 onClick = {
                                     deleteCache()
+                                    expanded = false
+                                }
+                            )
+                        }
+                        if (deleteFromHistory != null) {
+                            ModernDropdownItem(
+                                leadingIcon = Icons.Outlined.Delete,
+                                text = stringResource(R.string.remove_from_history),
+                                onClick = {
+                                    deleteFromHistory()
                                     expanded = false
                                 }
                             )

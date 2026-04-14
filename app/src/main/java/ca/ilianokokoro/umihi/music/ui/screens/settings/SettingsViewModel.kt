@@ -89,6 +89,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         )
     }
 
+    fun updateAutoCacheEnabled(value: Boolean) {
+        updateSetting(
+            DatastoreRepository.PreferenceKeys.AUTO_CACHE_ENABLED,
+            value
+        )
+    }
+
     @OptIn(UnstableApi::class)
     fun clearDownloads() {
         viewModelScope.launch {
@@ -120,10 +127,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             value
         )
     }
-
-    // checkForUpdates() ELIMINADO - Fork sin actualizaciones
-    // changeUpdateChannel() ELIMINADO - Fork sin actualizaciones
-    // updateShowUpdateChannelDialog() ELIMINADO - Fork sin actualizaciones
 
     fun isLoggedIn(): Boolean {
         val state = _uiState.value.screenState

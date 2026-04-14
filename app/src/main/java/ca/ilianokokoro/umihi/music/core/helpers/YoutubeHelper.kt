@@ -8,6 +8,7 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printd
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.models.UmihiSettings
@@ -163,6 +164,9 @@ object YoutubeHelper {
 
     suspend fun getSongPlayerUrl(context: Context, song: Song, allowLocal: Boolean = false): String {
         val localSongRepository = AppDatabase.getInstance(context).songRepository()
+        val datastoreRepository = DatastoreRepository(context)
+        val settings = datastoreRepository.getSettings()
+        
         var savedSong: Song? = null
         try {
             savedSong = localSongRepository.getSong(song.youtubeId)
@@ -171,7 +175,6 @@ object YoutubeHelper {
             printe(ex.toString())
         }
         
-        // 1. Buscar en Descargas (manuales)
         if (savedSong != null) {
             if (allowLocal && savedSong.audioFilePath != null) {
                 printd("${song.youtubeId} : Was downloaded manually")
@@ -186,7 +189,6 @@ object YoutubeHelper {
             }
         }
         
-        // 2. Buscar en Auto-caché (archivo en disco)
         if (allowLocal) {
             val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
             val cachedFile = File(audioDir, context.getString(R.string.webm_extension, song.youtubeId))
@@ -196,11 +198,10 @@ object YoutubeHelper {
             }
         }
         
-        // 3. Si no está en ningún lado, obtener de YouTube
         val newUri = getSongUrlFromYoutube(song)
         
-        // ⭐ AUTO-CACHÉ ⭐
-        if (allowLocal) {
+        // AUTO-CACHÉ - Solo si está activado en settings
+        if (allowLocal && settings.autoCacheEnabled) {
             try {
                 AutoCacheHelper.scheduleAutoDownload(context, song)
                 printd("${song.youtubeId} : Scheduled auto-download")

@@ -10,5 +10,6 @@ data class UmihiSettings(
     val useSpecialLanguage: Boolean = false,
     val useAudioOffload: Boolean = false,
     val cacheLimit: Int = 0,
-    val wifiOnly: Boolean = true
+    val wifiOnly: Boolean = true,
+    val autoCacheEnabled: Boolean = true
 )

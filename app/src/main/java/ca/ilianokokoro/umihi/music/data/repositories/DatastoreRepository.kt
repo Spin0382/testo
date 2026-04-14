@@ -11,6 +11,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.media3.common.util.UnstableApi
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.AUTO_CACHE_ENABLED
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.CACHE_LIMIT
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.COOKIES
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository.PreferenceKeys.DATA_SYNC_ID
@@ -37,6 +38,7 @@ class DatastoreRepository(private val context: Context) {
         val USE_AUDIO_OFFLOAD = booleanPreferencesKey(Constants.Datastore.USE_AUDIO_OFFLOAD)
         val CACHE_LIMIT = intPreferencesKey("cache_limit")
         val WIFI_ONLY = booleanPreferencesKey("wifi_only")
+        val AUTO_CACHE_ENABLED = booleanPreferencesKey("auto_cache_enabled")
     }
 
     suspend fun <T> save(key: Preferences.Key<T>, value: T) {
@@ -54,6 +56,7 @@ class DatastoreRepository(private val context: Context) {
         val useAudioOffload = it[USE_AUDIO_OFFLOAD] ?: false
         val cacheLimit = it[CACHE_LIMIT] ?: 0
         val wifiOnly = it[WIFI_ONLY] ?: true
+        val autoCacheEnabled = it[AUTO_CACHE_ENABLED] ?: true
         val cookies = cookies.first()
         val dataSyncId = dataSyncId.first()
 
@@ -65,7 +68,8 @@ class DatastoreRepository(private val context: Context) {
             useSpecialLanguage = useSpecialLanguage,
             useAudioOffload = useAudioOffload,
             cacheLimit = cacheLimit,
-            wifiOnly = wifiOnly
+            wifiOnly = wifiOnly,
+            autoCacheEnabled = autoCacheEnabled
         )
     }
 
