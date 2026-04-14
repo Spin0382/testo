@@ -38,8 +38,6 @@ import androidx.navigation3.ui.NavDisplay
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
-import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.extensions.playSong
 import ca.ilianokokoro.umihi.music.ui.components.BackButton
 import ca.ilianokokoro.umihi.music.ui.components.miniplayer.MiniPlayerWrapper
 import ca.ilianokokoro.umihi.music.ui.screens.auth.AuthScreen
@@ -49,7 +47,6 @@ import ca.ilianokokoro.umihi.music.ui.screens.player.PlayerScreen
 import ca.ilianokokoro.umihi.music.ui.screens.playlist.PlaylistScreen
 import ca.ilianokokoro.umihi.music.ui.screens.search.SearchScreen
 import ca.ilianokokoro.umihi.music.ui.screens.settings.SettingsScreen
-import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,7 +56,6 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
     val app = LocalContext.current.applicationContext as Application
     val currentScreen = backStack.last()
     val screenConfig = rememberScreenUiConfig(currentScreen)
-    val scope = rememberCoroutineScope()
 
     Scaffold(
         modifier = modifier
@@ -225,9 +221,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                         is HistoryScreenKey -> NavEntry(key) {
                             HistoryScreen(
                                 application = app,
-                                onSongClick = { historySong ->
-                                    // SOLO abrir el reproductor, NO reproducir la canción
-                                    // (la canción ya se está reproduciendo desde HistoryScreen si es necesario)
+                                onSongClick = { _ ->
                                     backStack.add(PlayerScreenKey)
                                 }
                             )

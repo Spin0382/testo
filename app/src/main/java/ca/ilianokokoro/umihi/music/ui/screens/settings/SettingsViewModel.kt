@@ -16,7 +16,6 @@ import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.ExoCache
 import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.core.managers.VersionManager
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.DownloadRepository
@@ -67,16 +66,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun updateShowUpdateChannelDialog(value: Boolean) {
-        viewModelScope.launch {
-            _uiState.update {
-                _uiState.value.copy(
-                    showUpdateChannelDialog = value
-                )
-            }
-        }
-    }
-
     fun updateShowCacheLimitDialog(value: Boolean) {
         viewModelScope.launch {
             _uiState.update {
@@ -116,13 +105,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun changeUpdateChannel(updateChannel: DatastoreRepository.UpdateChannel) {
-        updateSetting(
-            DatastoreRepository.PreferenceKeys.UPDATE_CHANNEL,
-            updateChannel.toString()
-        )
-    }
-
     fun updatePodcastPlaylistVisibility(value: Boolean) {
         updateSetting(
             DatastoreRepository.PreferenceKeys.SHOW_PODCAST_PLAYLIST,
@@ -139,11 +121,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         )
     }
 
-    fun checkForUpdates() {
-        viewModelScope.launch {
-            VersionManager.checkForUpdates(context = _application, manualCheck = true)
-        }
-    }
+    // checkForUpdates() ELIMINADO - Fork sin actualizaciones
+    // changeUpdateChannel() ELIMINADO - Fork sin actualizaciones
+    // updateShowUpdateChannelDialog() ELIMINADO - Fork sin actualizaciones
 
     fun isLoggedIn(): Boolean {
         val state = _uiState.value.screenState

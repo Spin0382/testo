@@ -20,11 +20,9 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.YoutubeExtractor
 import ca.ilianokokoro.umihi.music.core.helpers.YoutubeHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.core.managers.VersionManager
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.extensions.playSong
-import ca.ilianokokoro.umihi.music.ui.components.dialog.UpdateDialog
 import ca.ilianokokoro.umihi.music.ui.navigation.NavigationRoot
 import ca.ilianokokoro.umihi.music.ui.theme.UmihiMusicTheme
 import cat.ereza.customactivityoncrash.config.CaocConfig
@@ -46,7 +44,6 @@ class MainActivity : ComponentActivity() {
 
         initCoaoc()
         initNewPipe()
-        VersionManager.initialize(this)
         requestNotificationPermission()
         PlayerManager.init(this)
 
@@ -57,15 +54,13 @@ class MainActivity : ComponentActivity() {
                     NavigationRoot(
                         modifier = Modifier.fillMaxSize(),
                     )
-                    UpdateDialog(lifecycleScope)
                 }
             }
         }
 
         handleShareIntent(intent)
         handleViewIntent(intent)
-        checkForUpdate()
-
+        // checkForUpdate() // ELIMINADO - Fork sin actualizaciones
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -154,11 +149,5 @@ class MainActivity : ComponentActivity() {
             .backgroundMode(CaocConfig.BACKGROUND_MODE_CRASH)
             .trackActivities(true)
             .apply()
-    }
-
-    private fun checkForUpdate() {
-        lifecycleScope.launch {
-            VersionManager.checkForUpdates(this@MainActivity)
-        }
     }
 }
