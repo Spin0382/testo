@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.FeaturedPlayList
 import androidx.compose.material.icons.automirrored.outlined.Login
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.outlined.Cached
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Storage
@@ -131,6 +132,16 @@ fun SettingsScreen(
                 SettingsSection(
                     title = stringResource(R.string.data_and_storage),
                 ) {
+                    BooleanSettingItem(
+                        title = stringResource(R.string.auto_cache_title),
+                        subtitle = stringResource(R.string.auto_cache_subtitle),
+                        leadingIcon = Icons.Outlined.Cached,
+                        value = state.settings.autoCacheEnabled,
+                        onToggle = { settingsViewModel.updateAutoCacheEnabled(it) }
+                    )
+                    
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     SettingsItem(
                         title = stringResource(R.string.delete_downloads),
                         subtitle = stringResource(R.string.clear_data_message),
@@ -162,8 +173,6 @@ fun SettingsScreen(
                         onToggle = { settingsViewModel.updateWifiOnly(it) }
                     )
                 }
-
-                // SECCIÓN "APP INFO" ELIMINADA - Fork sin actualizaciones
 
                 Box(modifier = Modifier.height(Constants.Ui.SCROLLABLE_BOTTOM_PADDING))
 

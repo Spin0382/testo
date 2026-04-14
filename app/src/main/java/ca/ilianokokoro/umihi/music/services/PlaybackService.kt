@@ -1,6 +1,7 @@
 package ca.ilianokokoro.umihi.music.services
 
 import android.app.PendingIntent
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
@@ -27,6 +28,7 @@ import androidx.media3.session.CacheBitmapLoader
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import androidx.media3.session.SessionResult
+import ca.ilianokokoro.umihi.music.MainActivity
 import ca.ilianokokoro.umihi.music.core.ApiResult
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.ExoCache
@@ -119,11 +121,15 @@ class PlaybackService : MediaSessionService() {
             }
         })
 
-        val intent = packageManager.getLaunchIntentForPackage(packageName)
+        // Intent que abre el reproductor directamente
+        val playerIntent = Intent(this, MainActivity::class.java).apply {
+            putExtra("open_player", true)
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
         val pendingIntent = PendingIntent.getActivity(
             this,
             0,
-            intent,
+            playerIntent,
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
 
@@ -177,7 +183,6 @@ class PlaybackService : MediaSessionService() {
         
         serviceScope.launch {
             try {
-                // Solo verificar si ya existe HOY
                 val todayEntry = database.historyDao().getTodayEntry(songId)
                 if (todayEntry != null) {
                     UmihiHelper.printd("Song already in history today: $title")

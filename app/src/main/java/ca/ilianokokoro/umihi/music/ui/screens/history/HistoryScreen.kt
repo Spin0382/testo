@@ -121,10 +121,8 @@ fun HistoryScreen(
                                 song = songObj,
                                 onPress = {
                                     if (isCurrent) {
-                                        // Ya está sonando: solo abrir reproductor
                                         onSongClick(song)
                                     } else {
-                                        // Canción diferente: reproducir sin perder la cola
                                         controller?.playSongPreserveQueue(songObj)
                                         onSongClick(song)
                                     }
@@ -143,6 +141,9 @@ fun HistoryScreen(
                                     scope.launch {
                                         delay(100)
                                     }
+                                },
+                                deleteFromHistory = {
+                                    historyViewModel.deleteFromHistory(song)
                                 }
                             )
                         }
