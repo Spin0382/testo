@@ -39,7 +39,7 @@ class HistoryViewModel(application: Application) : AndroidViewModel(application)
     
     fun deleteFromHistory(song: HistorySong) {
         viewModelScope.launch {
-            historyDao.deleteByYoutubeId(song.youtubeId)
+            historyDao.deleteById(song.id)
         }
     }
     

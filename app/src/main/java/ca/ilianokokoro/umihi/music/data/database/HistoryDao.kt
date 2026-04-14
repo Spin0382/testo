@@ -18,6 +18,9 @@ interface HistoryDao {
     @Query("DELETE FROM history")
     suspend fun clearAll()
     
+    @Query("DELETE FROM history WHERE id = :id")
+    suspend fun deleteById(id: Long)
+    
     @Query("DELETE FROM history WHERE youtubeId = :youtubeId")
     suspend fun deleteByYoutubeId(youtubeId: String)
     
