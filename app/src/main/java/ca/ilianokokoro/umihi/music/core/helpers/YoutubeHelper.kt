@@ -175,43 +175,47 @@ object YoutubeHelper {
             printe(ex.toString())
         }
         
-        if (savedSong != null) {
-            if (allowLocal && savedSong.audioFilePath != null) {
+        // 1. Descarga manual (BD)
+        if (savedSong != null && savedSong.audioFilePath != null) {
+            val file = File(savedSong.audioFilePath)
+            if (file.exists()) {
                 printd("${song.youtubeId} : Was downloaded manually")
                 return savedSong.audioFilePath
             }
-            if (savedSong.streamUrl != null) {
-                if (isYoutubeUrlValid(savedSong.streamUrl)) {
-                    printd("${song.youtubeId} : Got url from saved")
-                    return savedSong.streamUrl
-                }
-                printd("${song.youtubeId} : Saved url was invalid")
-            }
         }
         
+        // 2. Auto-caché (archivo en disco)
         if (allowLocal) {
             val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
-            val cachedFile = File(audioDir, context.getString(R.string.webm_extension, song.youtubeId))
-            if (cachedFile.exists()) {
-                printd("${song.youtubeId} : Found in auto-cache")
+            val cachedFile = File(audioDir, "${song.youtubeId}.webm")
+            if (cachedFile.exists() && cachedFile.length() > 0) {
+                printd("${song.youtubeId} : Found in auto-cache (${cachedFile.length()} bytes)")
                 return cachedFile.absolutePath
             }
         }
         
+        // 3. Si no está, obtener streaming
         val newUri = getSongUrlFromYoutube(song)
         
-        // AUTO-CACHÉ - Solo si está activado en settings
+        // 4. Programar descarga para la próxima vez (solo si no existe ya)
         if (allowLocal && settings.autoCacheEnabled) {
-            try {
-                AutoCacheHelper.scheduleAutoDownload(context, song)
-                printd("${song.youtubeId} : Scheduled auto-download")
-            } catch (e: Exception) {
-                printe("${song.youtubeId} : Failed to schedule auto-download: ${e.message}")
+            val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
+            val cachedFile = File(audioDir, "${song.youtubeId}.webm")
+            if (!cachedFile.exists()) {
+                try {
+                    AutoCacheHelper.scheduleAutoDownload(context, song)
+                    printd("${song.youtubeId} : Scheduled auto-download")
+                } catch (e: Exception) {
+                    printe("${song.youtubeId} : Failed to schedule auto-download: ${e.message}")
+                }
             }
         }
         
-        localSongRepository.setStreamUrl(songId = song.youtubeId, streamUrl = newUri)
-        printd("${song.youtubeId} : Got url from YouTube and saved song")
+        // Guardar URL para futuras reproducciones
+        if (savedSong == null || savedSong.streamUrl != newUri) {
+            localSongRepository.setStreamUrl(songId = song.youtubeId, streamUrl = newUri)
+        }
+        printd("${song.youtubeId} : Using streaming URL")
         return newUri
     }
 
