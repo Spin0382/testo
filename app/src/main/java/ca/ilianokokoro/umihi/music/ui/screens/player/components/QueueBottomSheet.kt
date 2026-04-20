@@ -54,7 +54,6 @@ fun QueueBottomSheet(
         mutableSongList = mutableSongList.toMutableList().apply {
             add(to.index, removeAt(from.index))
         }
-
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
@@ -96,8 +95,7 @@ fun QueueBottomSheet(
                         Text(
                             stringResource(R.string.queue_empty),
                             textAlign = TextAlign.Center,
-                            modifier = modifier
-                                .fillMaxSize()
+                            modifier = modifier.fillMaxSize()
                         )
                     }
                 } else {
@@ -114,12 +112,16 @@ fun QueueBottomSheet(
                                 onPress = {
                                     PlayerManager.currentController?.seekTo(index, C.TIME_UNSET)
                                 },
+                                onDelete = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    PlayerManager.currentController?.removeMediaItem(index)
+                                    mutableSongList = mutableSongList.toMutableList().apply { removeAt(index) }
+                                },
                                 scope = this,
-                                onDragStarted =
-                                    {
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                                        startIndex = mutableSongList.indexOf(song)
-                                    },
+                                onDragStarted = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                                    startIndex = mutableSongList.indexOf(song)
+                                },
                                 onDragStopped = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
                                     PlayerManager.currentController?.moveMediaItem(

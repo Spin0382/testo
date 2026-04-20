@@ -1,6 +1,5 @@
 package ca.ilianokokoro.umihi.music.ui.screens.home
 
-
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -8,12 +7,11 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import ca.ilianokokoro.umihi.music.core.ApiResult
-import ca.ilianokokoro.umihi.music.core.Constants
-import ca.ilianokokoro.umihi.music.core.helpers.UmihiHelper.printe
-import ca.ilianokokoro.umihi.music.data.database.AppDatabase
+import ca.ilianokokoro.umihi.music.core.helpers.YoutubeHelper
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
-import ca.ilianokokoro.umihi.music.models.PlaylistInfo
+import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
+import ca.ilianokokoro.umihi.music.models.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -24,85 +22,49 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     val uiState = _uiState.asStateFlow()
 
     private val playlistRepository = PlaylistRepository()
-    private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
+    private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(application)
-
-
-    init {
-        getPlaylists()
-    }
 
     fun getPlaylists() {
         viewModelScope.launch {
-            getPlaylistsSuspend()
+            val settings = datastoreRepository.getSettings()
+            if (settings.cookies.isEmpty()) {
+                _uiState.update {
+                    _uiState.value.copy(screenState = ScreenState.LoggedOut)
+                }
+                return@launch
+            }
+
+            playlistRepository.retrieveAll(settings).collect { apiResult ->
+                _uiState.update {
+                    _uiState.value.copy(
+                        screenState = when (apiResult) {
+                            is ApiResult.Loading -> ScreenState.Loading
+                            is ApiResult.Error -> ScreenState.Error(apiResult.exception)
+                            is ApiResult.Success -> ScreenState.LoggedIn(apiResult.data)
+                        }
+                    )
+                }
+            }
         }
     }
 
     fun refreshPlaylists() {
         viewModelScope.launch {
-            _uiState.update {
-                _uiState.value.copy(
-                    isRefreshing = true
-                )
-            }
-
-            getPlaylistsSuspend()
-
-            _uiState.update {
-                _uiState.value.copy(
-                    isRefreshing = false
-                )
-            }
+            _uiState.update { it.copy(isRefreshing = true) }
+            getPlaylists()
+            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 
-    suspend fun getPlaylistsSuspend() {
-        try {
-            val settings = datastoreRepository.getSettings()
-
-            val downloadedPlaylist = PlaylistInfo(
-                id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-                title = "Downloaded",
-            )
-
-            if (!settings.cookies.isEmpty()) {
-                playlistRepository.retrieveAll(settings).collect { apiResult ->
-                    val playlists = when (apiResult) {
-                        is ApiResult.Success -> apiResult.data.toMutableList()
-                        is ApiResult.Error -> localPlaylistRepository.getAll().map { it.info }
-                            .toMutableList()
-
-                        ApiResult.Loading -> null
-                    }
-
-                    if (!settings.showPodcastPlaylist) {
-                        playlists?.removeIf { it.id == Constants.YoutubeApi.PODCAST_PLAYLIST_ID }
-                    }
-
-                    playlists?.add(0, downloadedPlaylist)
-                    _uiState.update {
-                        _uiState.value.copy(
-                            screenState = when (apiResult) {
-                                is ApiResult.Error, is ApiResult.Success -> ScreenState.LoggedIn(
-                                    playlists!!
-                                )
-
-                                ApiResult.Loading -> ScreenState.Loading
-                            }
-                        )
-                    }
-                }
-
-            } else {
-                _uiState.update {
-                    _uiState.value.copy(
-                        screenState =
-                            ScreenState.LoggedOut
-                    )
+    fun addFromLink(link: String, onSuccess: (Song) -> Unit) {
+        viewModelScope.launch {
+            val videoId = YoutubeHelper.extractYouTubeVideoId(link) ?: return@launch
+            songRepository.getSongInfo(videoId).collect { result ->
+                if (result is ApiResult.Success) {
+                    onSuccess(result.data)
                 }
             }
-        } catch (ex: Exception) {
-            printe(message = ex.toString(), exception = ex)
         }
     }
 
