@@ -117,7 +117,7 @@ fun QueueBottomSheet(
                                     PlayerManager.currentController?.removeMediaItem(index)
                                     mutableSongList = mutableSongList.toMutableList().apply { removeAt(index) }
                                 },
-                                scope = this,
+                                scope = this@launch,
                                 onDragStarted = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
                                     startIndex = mutableSongList.indexOf(song)
