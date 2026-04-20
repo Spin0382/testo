@@ -76,17 +76,21 @@ fun MiniPlayerWrapper(
             .padding(horizontal = 8.dp, vertical = 4.dp)
             .height(Constants.Ui.MiniPlayer.HEIGHT)
             .pointerInput(Unit) {
+                var dragAmount = 0f
                 detectVerticalDragGestures(
                     onDragEnd = {
-                        // Swipe hacia arriba -> abrir reproductor
-                        // Swipe hacia abajo -> cerrar mini player
-                    },
-                    onVerticalDrag = { _, dragAmount ->
-                        if (dragAmount < -50) {
+                        if (dragAmount < -100) {
                             onSwipeUp()
-                        } else if (dragAmount > 50) {
+                        } else if (dragAmount > 100) {
                             onSwipeDown()
                         }
+                        dragAmount = 0f
+                    },
+                    onVerticalDrag = { _, amount ->
+                        dragAmount += amount
+                    },
+                    onDragCancel = {
+                        dragAmount = 0f
                     }
                 )
             }
