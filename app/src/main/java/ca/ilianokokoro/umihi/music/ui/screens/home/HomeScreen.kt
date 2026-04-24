@@ -26,7 +26,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
-import ca.ilianokokoro.umihi.music.core.helpers.ComposeHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
@@ -96,10 +95,7 @@ fun HomeScreen(
                             columns = GridCells.Adaptive(minSize = 150.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(
-                                bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING,
-                                end = 80.dp
-                            )
+                            contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
                         ) {
                             itemsIndexed(
                                 items = playlists,
@@ -116,31 +112,34 @@ fun HomeScreen(
             }
         }
 
-        // Botón para crear playlist (arriba del FAB principal)
-        SmallFloatingActionButton(
-            onClick = { showCreatePlaylistDialog = true },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(end = 80.dp, bottom = 16.dp)
-        ) {
-            Icon(Icons.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
-        }
-
-        // FAB principal: añadir por link
-        FloatingActionButton(
-            onClick = {
-                clipboardManager.getText()?.let { clipText ->
-                    if (clipText.text.contains("youtube.com") || clipText.text.contains("youtu.be")) {
-                        youtubeLink = clipText.text
-                    }
-                }
-                showAddLinkDialog = true
-            },
+        // Agrupamos los FABs en una columna al final (derecha) para evitar solapamientos
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
+                .wrapContentSize(),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(Icons.Rounded.Add, contentDescription = "Añadir por link")
+            // Botón para crear playlist (arriba del FAB principal)
+            SmallFloatingActionButton(
+                onClick = { showCreatePlaylistDialog = true }
+            ) {
+                Icon(Icons.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
+            }
+
+            // FAB principal: añadir por link
+            FloatingActionButton(
+                onClick = {
+                    clipboardManager.getText()?.let { clipText ->
+                        if (clipText.text.contains("youtube.com") || clipText.text.contains("youtu.be")) {
+                            youtubeLink = clipText.text
+                        }
+                    }
+                    showAddLinkDialog = true
+                }
+            ) {
+                Icon(Icons.Rounded.Add, contentDescription = "Añadir por link")
+            }
         }
     }
 
@@ -153,6 +152,9 @@ fun HomeScreen(
                         .getInstance(application)
                         .playlistRepository()
                         .createPlaylist(title)
+                    // Refrescar la lista de playlists para que aparezca la nueva
+                    homeViewModel.getPlaylists()
+                    // Navegar a la playlist recién creada
                     onPlaylistPressed(playlistInfo)
                 }
             }
