@@ -16,6 +16,7 @@ import androidx.media3.common.C
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.extensions.getQueue
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.song.QueueSongListItem
 import sh.calvin.reorderable.ReorderableItem
@@ -32,22 +33,20 @@ fun QueueBottomSheet(
     val hapticFeedback = LocalHapticFeedback.current
     val player = PlayerManager.currentController ?: return
 
-    // Reactive queue from ExoPlayer
+    // Cola reactiva desde ExoPlayer (la extensión getQueue ya está importada)
     val queue by remember(player) {
         derivedStateOf {
-            val q = player.getQueue()
-            q.ifEmpty { songs } // fallback to passed songs if queue empty (rare)
+            val q: List<Song> = player.getQueue()
+            q.ifEmpty { songs }
         }
     }
 
     var startIndex by remember { mutableIntStateOf(0) }
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        // Reorder handled by drag; no need to update local copy because queue is reactive
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
-    // Scroll to current song on open
     LaunchedEffect(queue) {
         if (queue.isNotEmpty()) {
             val idx = queue.indexOfFirst { it.youtubeId == currentSong.youtubeId }
@@ -81,9 +80,7 @@ fun QueueBottomSheet(
                                 song = song,
                                 isCurrentSong = currentSong == song,
                                 onPress = { player.seekTo(index, C.TIME_UNSET) },
-                                onDelete = {
-                                    player.removeMediaItem(index)
-                                },
+                                onDelete = { player.removeMediaItem(index) },
                                 scope = rememberCoroutineScope(),
                                 onDragStarted = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
