@@ -33,7 +33,6 @@ fun QueueBottomSheet(
     val hapticFeedback = LocalHapticFeedback.current
     val player = PlayerManager.currentController ?: return
 
-    // Cola reactiva desde ExoPlayer (la extensión getQueue ya está importada)
     val queue by remember(player) {
         derivedStateOf {
             val q: List<Song> = player.getQueue()

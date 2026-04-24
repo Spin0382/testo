@@ -33,7 +33,7 @@ fun MiniPlayerWrapper(
     val bottomInset = with(LocalDensity.current) { insets.calculateBottomPadding().roundToPx() }
 
     var swipeEnabled by remember { mutableStateOf(true) }
-    val scope = rememberCoroutineScope()          // <-- NECESARIO
+    val scope = rememberCoroutineScope()
 
     DisposableEffect(player) {
         currentSong = player?.currentMediaItem?.toSong()
@@ -74,7 +74,7 @@ fun MiniPlayerWrapper(
                         } else if (dragAmount > 100) {
                             onSwipeDown()
                         }
-                        scope.launch {        // ahora sí compila
+                        scope.launch {
                             delay(400)
                             swipeEnabled = true
                         }
@@ -95,5 +95,3 @@ fun MiniPlayerWrapper(
         )
     }
 }
-
-// invalidate CI cache
