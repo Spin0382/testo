@@ -52,6 +52,11 @@ fun HomeScreen(
     var isAdding by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
 
+    // Cargar playlists al abrir la pantalla por primera vez
+    LaunchedEffect(Unit) {
+        homeViewModel.getPlaylists()
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
