@@ -12,10 +12,13 @@ import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
 import ca.ilianokokoro.umihi.music.models.Song
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(HomeState())
@@ -29,21 +32,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val settings = datastoreRepository.getSettings()
             if (settings.cookies.isEmpty()) {
-                _uiState.update {
-                    _uiState.value.copy(screenState = ScreenState.LoggedOut)
-                }
+                _uiState.update { it.copy(screenState = ScreenState.LoggedOut) }
                 return@launch
             }
-
             playlistRepository.retrieveAll(settings).collect { apiResult ->
                 _uiState.update {
-                    _uiState.value.copy(
-                        screenState = when (apiResult) {
-                            is ApiResult.Loading -> ScreenState.Loading
-                            is ApiResult.Error -> ScreenState.Error(apiResult.exception)
-                            is ApiResult.Success -> ScreenState.LoggedIn(apiResult.data)
-                        }
-                    )
+                    it.copy(screenState = when (apiResult) {
+                        is ApiResult.Loading -> ScreenState.Loading
+                        is ApiResult.Error -> ScreenState.Error(apiResult.exception)
+                        is ApiResult.Success -> ScreenState.LoggedIn(apiResult.data)
+                    })
                 }
             }
         }
@@ -57,22 +55,22 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addFromLink(link: String, onSuccess: (Song) -> Unit) {
-        viewModelScope.launch {
-            val videoId = YoutubeHelper.extractYouTubeVideoId(link) ?: return@launch
-            songRepository.getSongInfo(videoId).collect { result ->
-                if (result is ApiResult.Success) {
-                    onSuccess(result.data)
-                }
-            }
+    suspend fun extractSongFromLink(link: String): Result<Song> {
+        val videoId = YoutubeHelper.extractYouTubeVideoId(link)
+            ?: return Result.failure(Exception("Invalid YouTube link"))
+        return try {
+            val result = songRepository.getSongInfo(videoId).firstOrNull { it is ApiResult.Success }
+                ?: throw Exception("Could not fetch song info")
+            val song = (result as ApiResult.Success).data
+            Result.success(song)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
     companion object {
         fun Factory(application: Application): ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                HomeViewModel(application)
-            }
+            initializer { HomeViewModel(application) }
         }
     }
 }

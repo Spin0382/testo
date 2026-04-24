@@ -4,18 +4,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -25,6 +15,7 @@ import androidx.media3.common.Player
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.extensions.toSong
+import kotlinx.coroutines.delay
 
 @Composable
 fun MiniPlayerWrapper(
@@ -36,14 +27,13 @@ fun MiniPlayerWrapper(
 ) {
     val player = PlayerManager.currentController
     var currentSong by remember { mutableStateOf(player?.currentMediaItem?.toSong()) }
-    var songIsPlaying by remember(player) {
-        mutableStateOf(player?.isPlaying)
-    }
-    var songIsLoading by remember(player) {
-        mutableStateOf(player?.playbackState == Player.STATE_BUFFERING)
-    }
+    var songIsPlaying by remember(player) { mutableStateOf(player?.isPlaying) }
+    var songIsLoading by remember(player) { mutableStateOf(player?.playbackState == Player.STATE_BUFFERING) }
     val insets = WindowInsets.navigationBars.asPaddingValues()
     val bottomInset = with(LocalDensity.current) { insets.calculateBottomPadding().roundToPx() }
+
+    var swipeEnabled by remember { mutableStateOf(true) }
+    val scope = rememberCoroutineScope()          // <-- necesario para lanzar corrutinas
 
     DisposableEffect(player) {
         currentSong = player?.currentMediaItem?.toSong()
@@ -54,11 +44,7 @@ fun MiniPlayerWrapper(
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 currentSong = mediaItem?.toSong()
             }
-
-            override fun onIsPlayingChanged(isPlaying: Boolean) {
-                songIsPlaying = isPlaying
-            }
-
+            override fun onIsPlayingChanged(isPlaying: Boolean) { songIsPlaying = isPlaying }
             override fun onPlaybackStateChanged(playbackState: Int) {
                 songIsLoading = playbackState == Player.STATE_BUFFERING
             }
@@ -78,29 +64,30 @@ fun MiniPlayerWrapper(
             .pointerInput(Unit) {
                 var dragAmount = 0f
                 detectVerticalDragGestures(
+                    onDragStart = { dragAmount = 0f },
+                    onVerticalDrag = { _, amount -> dragAmount += amount },
                     onDragEnd = {
+                        if (!swipeEnabled) return@detectVerticalDragGestures
+                        swipeEnabled = false
                         if (dragAmount < -100) {
                             onSwipeUp()
                         } else if (dragAmount > 100) {
                             onSwipeDown()
                         }
+                        scope.launch {
+                            delay(400)
+                            swipeEnabled = true
+                        }
                         dragAmount = 0f
                     },
-                    onVerticalDrag = { _, amount ->
-                        dragAmount += amount
-                    },
-                    onDragCancel = {
-                        dragAmount = 0f
-                    }
+                    onDragCancel = { dragAmount = 0f }
                 )
             }
     ) {
         MiniPlayer(
             currentSong = currentSong!!,
             onClick = onMiniPlayerPressed,
-            onPlayPause = {
-                if (player?.isPlaying == true) player?.pause() else player?.play()
-            },
+            onPlayPause = { if (player?.isPlaying == true) player.pause() else player?.play() },
             onSkipNext = { player?.seekToNext() },
             onSkipPrevious = { player?.seekToPrevious() },
             isPlaying = songIsPlaying == true,

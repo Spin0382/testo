@@ -1,25 +1,11 @@
 package ca.ilianokokoro.umihi.music.ui.screens.player.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -32,7 +18,6 @@ import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.song.QueueSongListItem
-import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
@@ -45,36 +30,38 @@ fun QueueBottomSheet(
     modifier: Modifier = Modifier
 ) {
     val hapticFeedback = LocalHapticFeedback.current
+    val player = PlayerManager.currentController ?: return
 
-    var mutableSongList by remember { mutableStateOf(songs) }
+    // Reactive queue from ExoPlayer
+    val queue by remember(player) {
+        derivedStateOf {
+            val q = player.getQueue()
+            q.ifEmpty { songs } // fallback to passed songs if queue empty (rare)
+        }
+    }
+
     var startIndex by remember { mutableIntStateOf(0) }
-
     val lazyListState = rememberLazyListState()
     val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        mutableSongList = mutableSongList.toMutableList().apply {
-            add(to.index, removeAt(from.index))
-        }
+        // Reorder handled by drag; no need to update local copy because queue is reactive
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
-    LaunchedEffect(null) {
-        this.launch {
-            lazyListState.animateScrollToItem(index = songs.indexOf(currentSong))
+    // Scroll to current song on open
+    LaunchedEffect(queue) {
+        if (queue.isNotEmpty()) {
+            val idx = queue.indexOfFirst { it.youtubeId == currentSong.youtubeId }
+            if (idx >= 0) lazyListState.animateScrollToItem(idx)
         }
     }
 
     ModalBottomSheet(
-        onDismissRequest = {
-            changeVisibility(false)
-        },
-        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        onDismissRequest = { changeVisibility(false) },
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     ) {
-        Column(
-            modifier = modifier
-                .fillMaxSize()
-        ) {
+        Column(modifier = modifier.fillMaxSize()) {
             Text(
-                modifier = modifier.padding(start = 8.dp, bottom = 12.dp),
+                modifier = Modifier.padding(start = 8.dp, bottom = 12.dp),
                 text = stringResource(R.string.playing_now),
                 style = MaterialTheme.typography.titleLarge
             )
@@ -82,52 +69,29 @@ fun QueueBottomSheet(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = PaddingValues(
-                    start = 8.dp,
-                    top = 8.dp,
-                    end = 8.dp,
-                    bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING
-                ),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (mutableSongList.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.queue_empty),
-                            textAlign = TextAlign.Center,
-                            modifier = modifier.fillMaxSize()
-                        )
-                    }
+                if (queue.isEmpty()) {
+                    item { Text(stringResource(R.string.queue_empty), textAlign = TextAlign.Center, modifier = Modifier.fillMaxSize()) }
                 } else {
-                    itemsIndexed(
-                        items = mutableSongList, key = { _, song -> song.uid }
-                    ) { index, song ->
-                        ReorderableItem(
-                            reorderableLazyListState,
-                            key = song.uid
-                        ) { _ ->
+                    itemsIndexed(items = queue, key = { _, song -> song.uid }) { index, song ->
+                        ReorderableItem(reorderableLazyListState, key = song.uid) { _ ->
                             QueueSongListItem(
                                 song = song,
                                 isCurrentSong = currentSong == song,
-                                onPress = {
-                                    PlayerManager.currentController?.seekTo(index, C.TIME_UNSET)
-                                },
+                                onPress = { player.seekTo(index, C.TIME_UNSET) },
                                 onDelete = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    PlayerManager.currentController?.removeMediaItem(index)
-                                    mutableSongList = mutableSongList.toMutableList().apply { removeAt(index) }
+                                    player.removeMediaItem(index)
                                 },
-                                scope = this@launch,
+                                scope = rememberCoroutineScope(),
                                 onDragStarted = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                                    startIndex = mutableSongList.indexOf(song)
+                                    startIndex = index
                                 },
                                 onDragStopped = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
-                                    PlayerManager.currentController?.moveMediaItem(
-                                        startIndex,
-                                        mutableSongList.indexOf(song)
-                                    )
+                                    player.moveMediaItem(startIndex, index)
                                 }
                             )
                         }
