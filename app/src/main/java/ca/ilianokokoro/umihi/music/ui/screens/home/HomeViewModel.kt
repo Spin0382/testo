@@ -68,18 +68,16 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 emptyList()
             }
 
-            // 4. Combinar: descargas + remotas + locales (sin duplicados, aunque no debería haber)
+            // 4. Combinar: descargas + remotas + locales
             val combined = buildList {
                 downloadsPlaylist?.let { add(it) }
                 addAll(remotePlaylists)
                 addAll(localPlaylists)
             }
 
-            // 5. Actualizar estado
-            if (combined.isEmpty()) {
-                _uiState.update { it.copy(screenState = ScreenState.Empty) }
-            } else {
-                _uiState.update { it.copy(screenState = ScreenState.LoggedIn(combined)) }
+            // 5. Actualizar estado (siempre LoggedIn, incluso con lista vacía)
+            _uiState.update {
+                it.copy(screenState = ScreenState.LoggedIn(combined))
             }
         }
     }
