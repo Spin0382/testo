@@ -17,6 +17,7 @@ import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -27,7 +28,6 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val playlistRepository = PlaylistRepository()
     private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(application)
-    private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
     private val localSongRepository = AppDatabase.getInstance(application).songRepository()
 
     fun getPlaylists() {
@@ -39,7 +39,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             val downloadsPlaylist = if (downloadedSongs.isNotEmpty()) {
                 PlaylistInfo(
                     id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-                    title = getApplication<Application>().getString(R.string.downloads),
+                    title = "Downloads",
                     coverHref = ""
                 )
             } else null
@@ -51,7 +51,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                     var resultList = emptyList<PlaylistInfo>()
                     playlistRepository.retrieveAll(settings).collect { apiResult ->
                         if (apiResult is ApiResult.Success) {
-                            resultList = apiResult.data
+                            resultList = (apiResult as ApiResult.Success<List<PlaylistInfo>>).data
                         }
                     }
                     resultList
@@ -68,13 +68,9 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
             // 4. Actualizar estado
             if (combined.isEmpty()) {
-                _uiState.update {
-                    it.copy(screenState = ScreenState.Empty)
-                }
+                _uiState.update { it.copy(screenState = ScreenState.Empty) }
             } else {
-                _uiState.update {
-                    it.copy(screenState = ScreenState.LoggedIn(combined))
-                }
+                _uiState.update { it.copy(screenState = ScreenState.LoggedIn(combined)) }
             }
         }
     }
@@ -93,7 +89,7 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
         return try {
             val result = songRepository.getSongInfo(videoId).firstOrNull { it is ApiResult.Success }
                 ?: throw Exception("Could not fetch song info")
-            val song = (result as ApiResult.Success).data
+            val song = (result as ApiResult.Success<Song>).data
             Result.success(song)
         } catch (e: Exception) {
             Result.failure(e)
