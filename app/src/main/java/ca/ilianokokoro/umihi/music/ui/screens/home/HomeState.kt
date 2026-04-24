@@ -8,12 +8,7 @@ data class HomeState(
 )
 
 sealed class ScreenState {
-    data class LoggedIn(
-        val playlistInfos: List<PlaylistInfo>
-    ) : ScreenState()
-
-    data object Empty : ScreenState()  // Nuevo: ni descargas ni playlists
-    data object LoggedOut : ScreenState()
+    data class LoggedIn(val playlistInfos: List<PlaylistInfo>) : ScreenState()
     data object Loading : ScreenState()
     data class Error(val exception: Exception) : ScreenState()
 }

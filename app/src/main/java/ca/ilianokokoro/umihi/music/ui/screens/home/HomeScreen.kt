@@ -52,7 +52,6 @@ fun HomeScreen(
     var isAdding by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
 
-    // Cargar playlists al abrir la pantalla por primera vez
     LaunchedEffect(Unit) {
         homeViewModel.getPlaylists()
     }
@@ -69,18 +68,25 @@ fun HomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        when (uiState.screenState) {
+        when (val state = uiState.screenState) {
             ScreenState.Loading -> LoadingAnimation()
             is ScreenState.Error -> ErrorMessage(
-                ex = uiState.screenState.exception,
+                ex = state.exception,
                 onRetry = homeViewModel::getPlaylists
             )
             is ScreenState.LoggedIn -> {
-                val playlists = uiState.screenState.playlistInfos
+                val playlists = state.playlistInfos
                 if (playlists.isEmpty()) {
-                    EmptyPlaceholder()
+                    // Caso extremo: no debería ocurrir porque siempre está Downloads
+                    Text(
+                        text = stringResource(R.string.no_playlists),
+                        textAlign = TextAlign.Center
+                    )
                 } else {
-                    PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = homeViewModel::refreshPlaylists) {
+                    PullToRefreshBox(
+                        isRefreshing = uiState.isRefreshing,
+                        onRefresh = homeViewModel::refreshPlaylists
+                    ) {
                         LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
                             columns = GridCells.Adaptive(minSize = 150.dp),
@@ -88,7 +94,10 @@ fun HomeScreen(
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
                         ) {
-                            itemsIndexed(items = playlists, key = { _, p -> p.id }) { _, playlist ->
+                            itemsIndexed(
+                                items = playlists,
+                                key = { _, playlist -> playlist.id }
+                            ) { _, playlist ->
                                 PlaylistCard(
                                     playlistInfo = playlist,
                                     onClicked = { onPlaylistPressed(playlist) }
@@ -98,8 +107,6 @@ fun HomeScreen(
                     }
                 }
             }
-            ScreenState.LoggedOut -> EmptyPlaceholder() // Por si acaso
-            ScreenState.Empty -> EmptyPlaceholder()     // Sin descargas ni playlists
         }
 
         FloatingActionButton(
@@ -166,20 +173,6 @@ fun HomeScreen(
                     Text("Cancelar")
                 }
             }
-        )
-    }
-}
-
-@Composable
-private fun EmptyPlaceholder() {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = stringResource(R.string.no_playlists),
-            textAlign = TextAlign.Center
         )
     }
 }
