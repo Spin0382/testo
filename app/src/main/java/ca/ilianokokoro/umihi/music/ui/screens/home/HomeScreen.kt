@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -27,10 +28,12 @@ import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.ComposeHelper
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
+import ca.ilianokokoro.umihi.music.ui.components.dialog.CreatePlaylistDialog
 import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistCard
 import kotlinx.coroutines.launch
 
@@ -51,6 +54,8 @@ fun HomeScreen(
     var youtubeLink by remember { mutableStateOf("") }
     var isAdding by remember { mutableStateOf(false) }
     var addError by remember { mutableStateOf<String?>(null) }
+
+    var showCreatePlaylistDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         homeViewModel.getPlaylists()
@@ -77,7 +82,6 @@ fun HomeScreen(
             is ScreenState.LoggedIn -> {
                 val playlists = state.playlistInfos
                 if (playlists.isEmpty()) {
-                    // Caso extremo: no debería ocurrir porque siempre está Downloads
                     Text(
                         text = stringResource(R.string.no_playlists),
                         textAlign = TextAlign.Center
@@ -92,7 +96,10 @@ fun HomeScreen(
                             columns = GridCells.Adaptive(minSize = 150.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
+                            contentPadding = PaddingValues(
+                                bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING,
+                                end = 80.dp
+                            )
                         ) {
                             itemsIndexed(
                                 items = playlists,
@@ -109,6 +116,17 @@ fun HomeScreen(
             }
         }
 
+        // Botón para crear playlist (arriba del FAB principal)
+        SmallFloatingActionButton(
+            onClick = { showCreatePlaylistDialog = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 80.dp, bottom = 16.dp)
+        ) {
+            Icon(Icons.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
+        }
+
+        // FAB principal: añadir por link
         FloatingActionButton(
             onClick = {
                 clipboardManager.getText()?.let { clipText ->
@@ -118,10 +136,27 @@ fun HomeScreen(
                 }
                 showAddLinkDialog = true
             },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp)
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp)
         ) {
             Icon(Icons.Rounded.Add, contentDescription = "Añadir por link")
         }
+    }
+
+    if (showCreatePlaylistDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreatePlaylistDialog = false },
+            onCreate = { title ->
+                scope.launch {
+                    val playlistInfo = AppDatabase
+                        .getInstance(application)
+                        .playlistRepository()
+                        .createPlaylist(title)
+                    onPlaylistPressed(playlistInfo)
+                }
+            }
+        )
     }
 
     if (showAddLinkDialog) {
@@ -139,39 +174,52 @@ fun HomeScreen(
                         singleLine = true
                     )
                     if (addError != null) {
-                        Text(addError!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            addError!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                     if (isAdding) {
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(top = 8.dp))
+                        LinearProgressIndicator(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                        )
                     }
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    if (youtubeLink.isBlank()) {
-                        addError = "Introduce un enlace"
-                        return@TextButton
-                    }
-                    isAdding = true
-                    addError = null
-                    scope.launch {
-                        val result = homeViewModel.extractSongFromLink(youtubeLink)
-                        isAdding = false
-                        result.onSuccess { song ->
-                            PlayerManager.currentController?.addToQueue(song, context)
-                            Toast.makeText(context, "Añadido a la cola: ${song.title}", Toast.LENGTH_SHORT).show()
-                            showAddLinkDialog = false
-                            youtubeLink = ""
-                        }.onFailure { e ->
-                            addError = e.message ?: "Error desconocido"
+                TextButton(
+                    onClick = {
+                        if (youtubeLink.isBlank()) {
+                            addError = "Introduce un enlace"
+                            return@TextButton
                         }
-                    }
-                }, enabled = !isAdding) { Text("Añadir") }
+                        isAdding = true
+                        addError = null
+                        scope.launch {
+                            val result = homeViewModel.extractSongFromLink(youtubeLink)
+                            isAdding = false
+                            result.onSuccess { song ->
+                                PlayerManager.currentController?.addToQueue(song, context)
+                                Toast.makeText(context, "Añadido a la cola: ${song.title}", Toast.LENGTH_SHORT).show()
+                                showAddLinkDialog = false
+                                youtubeLink = ""
+                            }.onFailure { e ->
+                                addError = e.message ?: "Error desconocido"
+                            }
+                        }
+                    },
+                    enabled = !isAdding
+                ) { Text("Añadir") }
             },
             dismissButton = {
-                TextButton(onClick = { showAddLinkDialog = false; youtubeLink = ""; addError = null }) {
-                    Text("Cancelar")
-                }
+                TextButton(onClick = {
+                    showAddLinkDialog = false
+                    youtubeLink = ""
+                    addError = null
+                }) { Text("Cancelar") }
             }
         )
     }

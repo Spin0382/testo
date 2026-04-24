@@ -29,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -67,7 +68,7 @@ fun PlayerScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME && uiState.queue.isEmpty() && currentSong == null) {
+            if (event == Lifecycle.Event.ON_RESUME && (uiState.queue.isEmpty() || currentSong == null)) {
                 onBack()
             }
         }
@@ -75,7 +76,14 @@ fun PlayerScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val canGoBack = remember { androidx.compose.runtime.mutableStateOf(true) }
+    // Refuerzo: si la cola se vacía en cualquier momento, volver atrás
+    LaunchedEffect(uiState.queue.size) {
+        if (uiState.queue.isEmpty()) {
+            onBack()
+        }
+    }
+
+    val canGoBack = remember { mutableStateOf(true) }
 
     Column(
         modifier = modifier
@@ -172,10 +180,10 @@ fun PlayerScreen(
         }
     }
 
-    if (uiState.isQueueModalShown) {
+    if (uiState.isQueueModalShown && currentSong != null) {
         QueueBottomSheet(
             changeVisibility = { playerViewModel.setQueueVisibility(it) },
-            currentSong = uiState.queue[uiState.currentIndex],
+            currentSong = currentSong,
             songs = uiState.queue
         )
     }

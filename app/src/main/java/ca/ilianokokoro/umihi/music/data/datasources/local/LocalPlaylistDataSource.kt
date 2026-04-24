@@ -1,10 +1,6 @@
 package ca.ilianokokoro.umihi.music.data.datasources.local
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import androidx.room.Transaction
+import androidx.room.*
 import ca.ilianokokoro.umihi.music.models.Playlist
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.PlaylistSongCrossRef
@@ -21,19 +17,13 @@ interface LocalPlaylistDataSource {
     @Query("SELECT * FROM playlists WHERE id = :playlistId")
     suspend fun getPlaylistById(playlistId: String): Playlist?
 
-    @Query(
-        """
-    SELECT DISTINCT songId
-    FROM PlaylistSongCrossRef
-    WHERE songId IN (:songIds)
-"""
-    )
+    @Query("""SELECT DISTINCT songId FROM PlaylistSongCrossRef WHERE songId IN (:songIds)""")
     suspend fun getSongIdsWithPlaylist(songIds: List<String>): List<String>
 
     @Transaction
     @Query("SELECT * FROM playlists WHERE id = :playlistId")
     fun observePlaylistById(playlistId: String): Flow<Playlist?>
-    
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlistInfo: PlaylistInfo)
 
@@ -44,15 +34,25 @@ interface LocalPlaylistDataSource {
     suspend fun insertCrossRefs(refs: List<PlaylistSongCrossRef>)
 
     @Transaction
-    suspend fun insertPlaylistWithSongs(
-        playlist: Playlist,
-    ) {
+    suspend fun insertPlaylistWithSongs(playlist: Playlist) {
         insertPlaylist(playlist.info)
         val songs = playlist.songs
         insertSongs(songs)
         val refs = songs.map { song -> PlaylistSongCrossRef(playlist.info.id, song.youtubeId) }
         insertCrossRefs(refs)
     }
+
+    /** Crea una playlist local vacía y devuelve su info */
+    @Transaction
+    suspend fun createPlaylist(title: String): PlaylistInfo {
+        val id = "local_${System.currentTimeMillis()}"
+        val info = PlaylistInfo(id = id, title = title, coverHref = "")
+        insertPlaylist(info)
+        return info
+    }
+
+    @Query("SELECT * FROM playlists WHERE id LIKE 'local_%'")
+    suspend fun getLocalPlaylists(): List<PlaylistInfo>
 
     @Query("DELETE FROM playlists")
     suspend fun deleteAll()

@@ -13,10 +13,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.C
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
-import ca.ilianokokoro.umihi.music.extensions.getQueue
+import ca.ilianokokoro.umihi.music.extensions.toSong
 import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.song.QueueSongListItem
 import sh.calvin.reorderable.ReorderableItem
@@ -33,10 +35,33 @@ fun QueueBottomSheet(
     val hapticFeedback = LocalHapticFeedback.current
     val player = PlayerManager.currentController ?: return
 
-    val queue by remember(player) {
-        derivedStateOf {
-            val q: List<Song> = player.getQueue()
-            q.ifEmpty { songs }
+    // Cola reactiva con SnapshotStateList sincronizada manualmente
+    val queue = remember { mutableStateListOf<Song>() }
+
+    DisposableEffect(player) {
+        val listener = object : Player.Listener {
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                queue.clear()
+                for (i in 0 until player.mediaItemCount) {
+                    queue.add(player.getMediaItemAt(i).toSong())
+                }
+            }
+        }
+        player.addListener(listener)
+        // Sincronización inicial
+        queue.clear()
+        for (i in 0 until player.mediaItemCount) {
+            queue.add(player.getMediaItemAt(i).toSong())
+        }
+        onDispose { player.removeListener(listener) }
+    }
+
+    // Cerrar el bottom sheet si la cola queda vacía
+    LaunchedEffect(queue.size) {
+        if (queue.isEmpty()) {
+            changeVisibility(false)
+            player.stop()
+            player.clearMediaItems()
         }
     }
 
@@ -46,6 +71,7 @@ fun QueueBottomSheet(
         hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
     }
 
+    // Scroll a la canción actual
     LaunchedEffect(queue) {
         if (queue.isNotEmpty()) {
             val idx = queue.indexOfFirst { it.youtubeId == currentSong.youtubeId }
@@ -67,19 +93,32 @@ fun QueueBottomSheet(
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 state = lazyListState,
-                contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING),
+                contentPadding = PaddingValues(
+                    start = 8.dp, top = 8.dp, end = 8.dp,
+                    bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING
+                ),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (queue.isEmpty()) {
-                    item { Text(stringResource(R.string.queue_empty), textAlign = TextAlign.Center, modifier = Modifier.fillMaxSize()) }
+                    item {
+                        Text(
+                            stringResource(R.string.queue_empty),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 } else {
                     itemsIndexed(items = queue, key = { _, song -> song.uid }) { index, song ->
                         ReorderableItem(reorderableLazyListState, key = song.uid) { _ ->
                             QueueSongListItem(
                                 song = song,
-                                isCurrentSong = currentSong == song,
+                                isCurrentSong = song.youtubeId == currentSong.youtubeId,
                                 onPress = { player.seekTo(index, C.TIME_UNSET) },
-                                onDelete = { player.removeMediaItem(index) },
+                                onDelete = {
+                                    player.removeMediaItem(index)
+                                    // No es necesario manipular la lista manualmente;
+                                    // el listener onTimelineChanged se encargará.
+                                },
                                 scope = rememberCoroutineScope(),
                                 onDragStarted = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
@@ -87,7 +126,9 @@ fun QueueBottomSheet(
                                 },
                                 onDragStopped = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
-                                    player.moveMediaItem(startIndex, index)
+                                    if (startIndex != index) {
+                                        player.moveMediaItem(startIndex, index)
+                                    }
                                 }
                             )
                         }
