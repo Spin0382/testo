@@ -60,10 +60,7 @@ fun HomeScreen(
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
-            val loggedOut = uiState.screenState is ScreenState.LoggedOut
-            val noPlaylistsFound =
-                uiState.screenState is ScreenState.LoggedIn && uiState.screenState.playlistInfos.isEmpty()
-            if (event == Lifecycle.Event.ON_RESUME && (loggedOut || noPlaylistsFound)) {
+            if (event == Lifecycle.Event.ON_RESUME) {
                 homeViewModel.getPlaylists()
             }
         }
@@ -72,39 +69,37 @@ fun HomeScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(horizontal = 8.dp).fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            when (uiState.screenState) {
-                is ScreenState.LoggedIn -> {
-                    val playlists = uiState.screenState.playlistInfos
-                    if (playlists.isEmpty()) {
-                        Text(stringResource(R.string.no_playlists), textAlign = TextAlign.Center)
-                    } else {
-                        PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = homeViewModel::refreshPlaylists) {
-                            LazyVerticalGrid(
-                                modifier = Modifier.fillMaxSize(),
-                                columns = GridCells.Adaptive(minSize = 150.dp),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
-                            ) {
-                                itemsIndexed(items = playlists, key = { _, p -> p.id }) { _, playlist ->
-                                    PlaylistCard(playlistInfo = playlist, onClicked = { onPlaylistPressed(playlist) })
-                                }
+        when (uiState.screenState) {
+            ScreenState.Loading -> LoadingAnimation()
+            is ScreenState.Error -> ErrorMessage(
+                ex = uiState.screenState.exception,
+                onRetry = homeViewModel::getPlaylists
+            )
+            is ScreenState.LoggedIn -> {
+                val playlists = uiState.screenState.playlistInfos
+                if (playlists.isEmpty()) {
+                    EmptyPlaceholder()
+                } else {
+                    PullToRefreshBox(isRefreshing = uiState.isRefreshing, onRefresh = homeViewModel::refreshPlaylists) {
+                        LazyVerticalGrid(
+                            modifier = Modifier.fillMaxSize(),
+                            columns = GridCells.Adaptive(minSize = 150.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(bottom = Constants.Ui.SCROLLABLE_BOTTOM_PADDING)
+                        ) {
+                            itemsIndexed(items = playlists, key = { _, p -> p.id }) { _, playlist ->
+                                PlaylistCard(
+                                    playlistInfo = playlist,
+                                    onClicked = { onPlaylistPressed(playlist) }
+                                )
                             }
                         }
                     }
                 }
-                ScreenState.LoggedOut -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.log_in_message), textAlign = TextAlign.Center)
-                    FilledTonalButton(onClick = onSettingsButtonPress) { Text(stringResource(R.string.open_settings)) }
-                }
-                ScreenState.Loading -> LoadingAnimation()
-                is ScreenState.Error -> ErrorMessage(ex = uiState.screenState.exception, onRetry = homeViewModel::getPlaylists)
             }
+            ScreenState.LoggedOut -> EmptyPlaceholder() // Por si acaso
+            ScreenState.Empty -> EmptyPlaceholder()     // Sin descargas ni playlists
         }
 
         FloatingActionButton(
@@ -171,6 +166,20 @@ fun HomeScreen(
                     Text("Cancelar")
                 }
             }
+        )
+    }
+}
+
+@Composable
+private fun EmptyPlaceholder() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = stringResource(R.string.no_playlists),
+            textAlign = TextAlign.Center
         )
     }
 }

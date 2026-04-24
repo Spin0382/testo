@@ -7,18 +7,18 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import ca.ilianokokoro.umihi.music.core.ApiResult
+import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.YoutubeHelper
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
+import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val _uiState = MutableStateFlow(HomeState())
@@ -27,21 +27,53 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val playlistRepository = PlaylistRepository()
     private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(application)
+    private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
+    private val localSongRepository = AppDatabase.getInstance(application).songRepository()
 
     fun getPlaylists() {
         viewModelScope.launch {
+            _uiState.update { it.copy(screenState = ScreenState.Loading) }
+
+            // 1. Cargar descargas locales (siempre disponibles)
+            val downloadedSongs = localSongRepository.getDownloadedSongs()
+            val downloadsPlaylist = if (downloadedSongs.isNotEmpty()) {
+                PlaylistInfo(
+                    id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+                    title = getApplication<Application>().getString(R.string.downloads),
+                    coverHref = ""
+                )
+            } else null
+
+            // 2. Intentar obtener playlists remotas (puede fallar sin internet)
             val settings = datastoreRepository.getSettings()
-            if (settings.cookies.isEmpty()) {
-                _uiState.update { it.copy(screenState = ScreenState.LoggedOut) }
-                return@launch
+            val remotePlaylists = if (!settings.cookies.isEmpty()) {
+                try {
+                    var resultList = emptyList<PlaylistInfo>()
+                    playlistRepository.retrieveAll(settings).collect { apiResult ->
+                        if (apiResult is ApiResult.Success) {
+                            resultList = apiResult.data
+                        }
+                    }
+                    resultList
+                } catch (e: Exception) {
+                    emptyList()
+                }
+            } else emptyList()
+
+            // 3. Combinar listas: descargas primero, luego remotas
+            val combined = buildList {
+                downloadsPlaylist?.let { add(it) }
+                addAll(remotePlaylists)
             }
-            playlistRepository.retrieveAll(settings).collect { apiResult ->
+
+            // 4. Actualizar estado
+            if (combined.isEmpty()) {
                 _uiState.update {
-                    it.copy(screenState = when (apiResult) {
-                        is ApiResult.Loading -> ScreenState.Loading
-                        is ApiResult.Error -> ScreenState.Error(apiResult.exception)
-                        is ApiResult.Success -> ScreenState.LoggedIn(apiResult.data)
-                    })
+                    it.copy(screenState = ScreenState.Empty)
+                }
+            } else {
+                _uiState.update {
+                    it.copy(screenState = ScreenState.LoggedIn(combined))
                 }
             }
         }

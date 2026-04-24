@@ -2,7 +2,6 @@ package ca.ilianokokoro.umihi.music.ui.screens.home
 
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 
-
 data class HomeState(
     val screenState: ScreenState = ScreenState.Loading,
     val isRefreshing: Boolean = false
@@ -13,10 +12,8 @@ sealed class ScreenState {
         val playlistInfos: List<PlaylistInfo>
     ) : ScreenState()
 
-    data object LoggedOut
-        : ScreenState()
-
-
+    data object Empty : ScreenState()  // Nuevo: ni descargas ni playlists
+    data object LoggedOut : ScreenState()
     data object Loading : ScreenState()
     data class Error(val exception: Exception) : ScreenState()
 }
