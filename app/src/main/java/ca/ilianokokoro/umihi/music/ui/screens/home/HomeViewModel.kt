@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import ca.ilianokokoro.umihi.music.core.ApiResult
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.helpers.YoutubeHelper
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.data.repositories.SongRepository
@@ -27,19 +28,24 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val playlistRepository = PlaylistRepository()
     private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(application)
+    private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
+    private val localSongRepository = AppDatabase.getInstance(application).songRepository()
 
     fun getPlaylists() {
         viewModelScope.launch {
             _uiState.update { it.copy(screenState = ScreenState.Loading) }
 
-            // La playlist de descargas siempre está presente
-            val downloadsPlaylist = PlaylistInfo(
-                id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-                title = "Downloads",
-                coverHref = ""
-            )
+            // 1. Playlist de descargas (si hay canciones descargadas)
+            val downloadedSongs = localSongRepository.getDownloadedSongs()
+            val downloadsPlaylist = if (downloadedSongs.isNotEmpty()) {
+                PlaylistInfo(
+                    id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+                    title = "Downloads",
+                    coverHref = ""
+                )
+            } else null
 
-            // Playlists remotas (solo si hay cookies)
+            // 2. Playlists remotas (puede fallar sin internet)
             val settings = datastoreRepository.getSettings()
             val remotePlaylists = if (!settings.cookies.isEmpty()) {
                 try {
@@ -55,14 +61,25 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } else emptyList()
 
-            // Combinar: primero Downloads, luego remotas
-            val combined = buildList {
-                add(downloadsPlaylist)
-                addAll(remotePlaylists)
+            // 3. Playlists locales (creadas por el usuario)
+            val localPlaylists = try {
+                localPlaylistRepository.getLocalPlaylists()
+            } catch (e: Exception) {
+                emptyList()
             }
 
-            _uiState.update {
-                it.copy(screenState = ScreenState.LoggedIn(combined))
+            // 4. Combinar: descargas + remotas + locales (sin duplicados, aunque no debería haber)
+            val combined = buildList {
+                downloadsPlaylist?.let { add(it) }
+                addAll(remotePlaylists)
+                addAll(localPlaylists)
+            }
+
+            // 5. Actualizar estado
+            if (combined.isEmpty()) {
+                _uiState.update { it.copy(screenState = ScreenState.Empty) }
+            } else {
+                _uiState.update { it.copy(screenState = ScreenState.LoggedIn(combined)) }
             }
         }
     }
