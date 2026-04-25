@@ -9,10 +9,10 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ca.ilianokokoro.umihi.music.core.Constants
@@ -22,15 +22,18 @@ import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 
 @Composable
 fun PlaylistCard(onClicked: () -> Unit, playlistInfo: PlaylistInfo) {
+    var coverUri by remember(playlistInfo.id) { mutableStateOf(playlistInfo.coverHref) }
+
     // Obtener la portada de la primera canción si es una playlist local
-    val coverUri = remember(playlistInfo.id) {
-        if (playlistInfo.id.startsWith("local_")) {
-            val playlist = AppDatabase.getInstance(androidx.compose.ui.platform.LocalContext.current)
+    if (playlistInfo.id.startsWith("local_")) {
+        LaunchedEffect(playlistInfo.id) {
+            val playlist = AppDatabase.getInstance(LocalContext.current)
                 .playlistRepository()
                 .getPlaylistById(playlistInfo.id)
-            playlist?.songs?.firstOrNull()?.thumbnailHref ?: playlistInfo.coverHref
-        } else {
-            playlistInfo.coverHref
+            val firstSongThumb = playlist?.songs?.firstOrNull()?.thumbnailHref
+            if (!firstSongThumb.isNullOrBlank()) {
+                coverUri = firstSongThumb
+            }
         }
     }
 
@@ -46,7 +49,7 @@ fun PlaylistCard(onClicked: () -> Unit, playlistInfo: PlaylistInfo) {
                 .fillMaxSize()
         ) {
             if (!playlistInfo.isDownloadedPlaylist) {
-                SquareImage(uri = coverUri ?: "")
+                SquareImage(uri = coverUri.orEmpty())
             } else {
                 OfflineThumbnail()
             }

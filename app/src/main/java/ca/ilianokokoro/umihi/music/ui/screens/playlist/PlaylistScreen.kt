@@ -14,13 +14,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -63,11 +57,14 @@ fun PlaylistScreen(
     var songToAdd by remember { mutableStateOf<Song?>(null) }
     val localPlaylists = remember { mutableStateListOf<PlaylistInfo>() }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(playlistInfo.id) {
         if (playlistInfo.id.startsWith("local_")) {
             localPlaylists.clear()
             localPlaylists.addAll(
-                AppDatabase.getInstance(application).playlistRepository().getLocalPlaylists().filter { it.id != playlistInfo.id }
+                AppDatabase.getInstance(application)
+                    .playlistRepository()
+                    .getLocalPlaylists()
+                    .filter { it.id != playlistInfo.id }
             )
         }
     }
@@ -133,16 +130,13 @@ fun PlaylistScreen(
                                 playNext = { PlayerManager.currentController?.addNext(song, application) },
                                 addToQueue = { PlayerManager.currentController?.addToQueue(song, application) },
                                 download = { playlistViewModel.downloadSong(song) },
-                                delete = if (playlist.info.id.startsWith("local_"))
-                                    null  // no aplica
-                                else
-                                    { playlistViewModel.deleteSong(song) },
-                                deleteFromHistory = if (playlist.info.id.startsWith("local_"))
-                                    {
+                                delete = {
+                                    if (playlist.info.id.startsWith("local_"))
                                         playlistViewModel.removeSongFromPlaylist(song)
-                                        Toast.makeText(context, "Canción eliminada de la playlist", Toast.LENGTH_SHORT).show()
-                                    }
-                                else null,
+                                    else
+                                        playlistViewModel.deleteSong(song)
+                                },
+                                deleteFromHistory = null,
                                 addToPlaylist = {
                                     songToAdd = song
                                     showAddToPlaylistDialog = true
