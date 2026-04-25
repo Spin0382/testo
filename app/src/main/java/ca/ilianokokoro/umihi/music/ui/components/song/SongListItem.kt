@@ -53,7 +53,8 @@ fun SongListItem(
     delete: (() -> Unit)? = null,
     deleteCache: (() -> Unit)? = null,
     deleteFromHistory: (() -> Unit)? = null,
-    addToPlaylist: (() -> Unit)? = null
+    addToPlaylist: (() -> Unit)? = null,
+    removeFromPlaylist: (() -> Unit)? = null   // NUEVO
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -132,6 +133,16 @@ fun SongListItem(
                                 text = "Añadir a playlist",
                                 onClick = {
                                     addToPlaylist()
+                                    expanded = false
+                                }
+                            )
+                        }
+                        if (removeFromPlaylist != null) {
+                            ModernDropdownItem(
+                                leadingIcon = Icons.Rounded.Delete,
+                                text = "Eliminar de playlist",
+                                onClick = {
+                                    removeFromPlaylist()
                                     expanded = false
                                 }
                             )

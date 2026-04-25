@@ -102,7 +102,7 @@ fun PlaylistInfo(
 
                 if (!playlist.info.isDownloadedPlaylist) {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = if (isLocal) Arrangement.End else Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (!isLocal) {

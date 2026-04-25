@@ -46,7 +46,7 @@ import kotlinx.coroutines.launch
 fun PlaylistScreen(
     playlistInfo: PlaylistInfo,
     onOpenPlayer: () -> Unit,
-    onBack: () -> Unit,                     // nuevo parámetro para cerrar pantalla
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
     application: Application,
     playlistViewModel: PlaylistViewModel = viewModel(
@@ -156,13 +156,9 @@ fun PlaylistScreen(
                                 playNext = { PlayerManager.currentController?.addNext(song, application) },
                                 addToQueue = { PlayerManager.currentController?.addToQueue(song, application) },
                                 download = { playlistViewModel.downloadSong(song) },
-                                delete = {
-                                    if (playlist.info.id.startsWith("local_"))
-                                        playlistViewModel.removeSongFromPlaylist(song)
-                                    else
-                                        playlistViewModel.deleteSong(song)
-                                },
+                                delete = if (!playlist.info.id.startsWith("local_")) { { playlistViewModel.deleteSong(song) } } else null,
                                 deleteFromHistory = null,
+                                removeFromPlaylist = if (playlist.info.id.startsWith("local_")) { { playlistViewModel.removeSongFromPlaylist(song) } } else null,
                                 addToPlaylist = {
                                     songToAdd = song
                                     showAddToPlaylistDialog = true
