@@ -23,11 +23,12 @@ import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 @Composable
 fun PlaylistCard(onClicked: () -> Unit, playlistInfo: PlaylistInfo) {
     var coverUri by remember(playlistInfo.id) { mutableStateOf(playlistInfo.coverHref) }
+    val context = LocalContext.current
 
-    // Obtener la portada de la primera canción si es una playlist local
-    if (playlistInfo.id.startsWith("local_")) {
-        LaunchedEffect(playlistInfo.id) {
-            val playlist = AppDatabase.getInstance(LocalContext.current)
+    // Si es una playlist local, obtener la portada de la primera canción
+    LaunchedEffect(playlistInfo.id) {
+        if (playlistInfo.id.startsWith("local_")) {
+            val playlist = AppDatabase.getInstance(context)
                 .playlistRepository()
                 .getPlaylistById(playlistInfo.id)
             val firstSongThumb = playlist?.songs?.firstOrNull()?.thumbnailHref
