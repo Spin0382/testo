@@ -1,6 +1,7 @@
 package ca.ilianokokoro.umihi.music.ui.screens.history
 
 import android.app.Application
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,12 +20,14 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -33,11 +36,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.extensions.addNext
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.extensions.isCurrentSong
 import ca.ilianokokoro.umihi.music.extensions.playSongPreserveQueue
 import ca.ilianokokoro.umihi.music.models.HistorySong
+import ca.ilianokokoro.umihi.music.models.PlaylistInfo
+import ca.ilianokokoro.umihi.music.models.Song
+import ca.ilianokokoro.umihi.music.ui.components.dialog.AddToPlaylistDialog
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,7 +63,18 @@ fun HistoryScreen(
     val historySongs by historyViewModel.historySongs.collectAsStateWithLifecycle()
     val groupedSongs = groupSongsByDate(historySongs)
     val scope = rememberCoroutineScope()
-    
+    val context = LocalContext.current
+
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var songToAdd by remember { mutableStateOf<Song?>(null) }
+    val localPlaylists = remember { mutableStateListOf<PlaylistInfo>() }
+
+    // Cargar playlists locales una vez
+    LaunchedEffect(Unit) {
+        localPlaylists.clear()
+        localPlaylists.addAll(AppDatabase.getInstance(application).playlistRepository().getLocalPlaylists())
+    }
+
     Scaffold { paddingValues ->
         Column(
             modifier = Modifier
@@ -74,7 +92,7 @@ fun HistoryScreen(
                     )
                 }
             }
-            
+
             if (historySongs.isEmpty()) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -110,13 +128,10 @@ fun HistoryScreen(
                             items = songs,
                             key = { it.id }
                         ) { song ->
-                            val context = androidx.compose.ui.platform.LocalContext.current
                             val controller = PlayerManager.currentController
                             val songObj = song.toSong()
                             val isCurrent = controller?.isCurrentSong(songObj) == true
-                            
-                            var cacheKey by remember { mutableStateOf(0) }
-                            
+
                             SongListItem(
                                 song = songObj,
                                 onPress = {
@@ -127,23 +142,15 @@ fun HistoryScreen(
                                         onSongClick(song)
                                     }
                                 },
-                                playNext = { 
-                                    controller?.addNext(songObj, context) 
-                                },
-                                addToQueue = { 
-                                    controller?.addToQueue(songObj, context) 
-                                },
+                                playNext = { controller?.addNext(songObj, context) },
+                                addToQueue = { controller?.addToQueue(songObj, context) },
                                 download = { historyViewModel.downloadSong(song) },
                                 delete = { historyViewModel.deleteSong(song) },
-                                deleteCache = {
-                                    historyViewModel.deleteCache(song)
-                                    cacheKey++
-                                    scope.launch {
-                                        delay(100)
-                                    }
-                                },
-                                deleteFromHistory = {
-                                    historyViewModel.deleteFromHistory(song)
+                                deleteCache = { historyViewModel.deleteCache(song) },
+                                deleteFromHistory = { historyViewModel.deleteFromHistory(song) },
+                                addToPlaylist = {
+                                    songToAdd = songObj
+                                    showAddToPlaylistDialog = true
                                 }
                             )
                         }
@@ -152,6 +159,22 @@ fun HistoryScreen(
             }
         }
     }
+
+    if (showAddToPlaylistDialog && songToAdd != null) {
+        AddToPlaylistDialog(
+            playlists = localPlaylists,
+            onDismiss = { showAddToPlaylistDialog = false },
+            onPlaylistSelected = { playlist ->
+                scope.launch {
+                    AppDatabase.getInstance(application)
+                        .playlistRepository()
+                        .addSongToPlaylist(playlist.id, songToAdd!!)
+                    Toast.makeText(context, "Añadido a ${playlist.title}", Toast.LENGTH_SHORT).show()
+                    showAddToPlaylistDialog = false
+                }
+            }
+        )
+    }
 }
 
 private fun groupSongsByDate(songs: List<HistorySong>): List<Pair<String, List<HistorySong>>> {
@@ -159,10 +182,10 @@ private fun groupSongsByDate(songs: List<HistorySong>): List<Pair<String, List<H
     val today = calendar.time
     calendar.add(Calendar.DAY_OF_YEAR, -1)
     val yesterday = calendar.time
-    
+
     val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
     val dayFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
-    
+
     return songs.groupBy { song ->
         val songDate = Date(song.timestamp)
         when {
@@ -173,8 +196,8 @@ private fun groupSongsByDate(songs: List<HistorySong>): List<Pair<String, List<H
     }.toList().sortedByDescending { (_, songs) -> songs.first().timestamp }
 }
 
-fun HistorySong.toSong(): ca.ilianokokoro.umihi.music.models.Song {
-    return ca.ilianokokoro.umihi.music.models.Song(
+fun HistorySong.toSong(): Song {
+    return Song(
         youtubeId = this.youtubeId,
         title = this.title,
         artist = this.artist,

@@ -10,18 +10,33 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ca.ilianokokoro.umihi.music.core.Constants
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.ui.components.SquareImage
 
 @Composable
 fun PlaylistCard(onClicked: () -> Unit, playlistInfo: PlaylistInfo) {
+    // Obtener la portada de la primera canción si es una playlist local
+    val coverUri = remember(playlistInfo.id) {
+        if (playlistInfo.id.startsWith("local_")) {
+            val playlist = AppDatabase.getInstance(androidx.compose.ui.platform.LocalContext.current)
+                .playlistRepository()
+                .getPlaylistById(playlistInfo.id)
+            playlist?.songs?.firstOrNull()?.thumbnailHref ?: playlistInfo.coverHref
+        } else {
+            playlistInfo.coverHref
+        }
+    }
+
     Card(
-        onClick = onClicked, modifier = Modifier.fillMaxSize(),
+        onClick = onClicked,
+        modifier = Modifier.fillMaxSize(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer)
     ) {
         Column(
@@ -30,16 +45,11 @@ fun PlaylistCard(onClicked: () -> Unit, playlistInfo: PlaylistInfo) {
                 .padding(12.dp)
                 .fillMaxSize()
         ) {
-
             if (!playlistInfo.isDownloadedPlaylist) {
-                SquareImage(
-                    uri = playlistInfo.coverPath ?: playlistInfo.coverHref,
-                )
+                SquareImage(uri = coverUri ?: "")
             } else {
                 OfflineThumbnail()
             }
-
-
             Text(
                 playlistInfo.title,
                 modifier = Modifier

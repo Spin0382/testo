@@ -18,6 +18,7 @@ import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.DownloadForOffline
 import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material.icons.rounded.PlayCircleOutline
+import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,11 +52,12 @@ fun SongListItem(
     download: (() -> Unit)? = null,
     delete: (() -> Unit)? = null,
     deleteCache: (() -> Unit)? = null,
-    deleteFromHistory: (() -> Unit)? = null
+    deleteFromHistory: (() -> Unit)? = null,
+    addToPlaylist: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    
+
     val isCached = remember(song) {
         val audioDir = UmihiHelper.getDownloadDirectory(context, Constants.Downloads.AUDIO_FILES_FOLDER)
         val cachedFile = File(audioDir, context.getString(R.string.webm_extension, song.youtubeId))
@@ -124,6 +126,16 @@ fun SongListItem(
                                 expanded = false
                             }
                         )
+                        if (addToPlaylist != null) {
+                            ModernDropdownItem(
+                                leadingIcon = Icons.Rounded.PlaylistAdd,
+                                text = "Añadir a playlist",
+                                onClick = {
+                                    addToPlaylist()
+                                    expanded = false
+                                }
+                            )
+                        }
                         if (download != null && !song.downloaded) {
                             ModernDropdownItem(
                                 leadingIcon = Icons.Rounded.Download,

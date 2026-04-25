@@ -36,13 +36,27 @@ interface LocalPlaylistDataSource {
     @Transaction
     suspend fun insertPlaylistWithSongs(playlist: Playlist) {
         insertPlaylist(playlist.info)
-        val songs = playlist.songs
-        insertSongs(songs)
-        val refs = songs.map { song -> PlaylistSongCrossRef(playlist.info.id, song.youtubeId) }
+        insertSongs(playlist.songs)
+        val refs = playlist.songs.map { PlaylistSongCrossRef(playlist.info.id, it.youtubeId) }
         insertCrossRefs(refs)
     }
 
-    /** Crea una playlist local vacía y devuelve su info */
+    /** Añadir una canción a una playlist existente */
+    @Transaction
+    suspend fun addSongToPlaylist(playlistId: String, song: Song) {
+        insertSongs(listOf(song))
+        insertCrossRefs(listOf(PlaylistSongCrossRef(playlistId, song.youtubeId)))
+    }
+
+    /** Eliminar una canción de una playlist (solo la referencia) */
+    @Query("DELETE FROM PlaylistSongCrossRef WHERE playlistId = :playlistId AND songId = :songId")
+    suspend fun removeSongFromPlaylist(playlistId: String, songId: String)
+
+    /** Obtener todas las canciones de una playlist (solo IDs) */
+    @Query("SELECT songId FROM PlaylistSongCrossRef WHERE playlistId = :playlistId")
+    suspend fun getSongIdsForPlaylist(playlistId: String): List<String>
+
+    /** Crear una playlist local vacía */
     @Transaction
     suspend fun createPlaylist(title: String): PlaylistInfo {
         val id = "local_${System.currentTimeMillis()}"

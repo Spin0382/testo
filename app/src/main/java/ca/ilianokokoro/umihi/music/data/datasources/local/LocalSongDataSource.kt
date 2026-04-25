@@ -1,10 +1,6 @@
 package ca.ilianokokoro.umihi.music.data.datasources.local
 
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
+import androidx.room.*
 import ca.ilianokokoro.umihi.music.models.Song
 
 @Dao
@@ -18,9 +14,7 @@ interface LocalSongDataSource {
     FROM songs 
     WHERE audioFilePath IS NOT NULL 
       AND thumbnailPath IS NOT NULL
-      ORDER BY  
-        songs.title COLLATE NOCASE ASC,
-        songs.artist COLLATE NOCASE ASC
+    ORDER BY songs.title COLLATE NOCASE ASC, songs.artist COLLATE NOCASE ASC
 """
     )
     suspend fun getDownloadedSongs(): List<Song>
@@ -35,11 +29,7 @@ interface LocalSongDataSource {
     suspend fun deleteAll()
 
     suspend fun setStreamUrl(songId: String, streamUrl: String) {
-        val existing = getSong(songId) ?: Song(
-            youtubeId = songId,
-            streamUrl = streamUrl
-        )
-
+        val existing = getSong(songId) ?: Song(youtubeId = songId, streamUrl = streamUrl)
         val updated = existing.copy(streamUrl = streamUrl)
         create(updated)
     }
@@ -49,5 +39,4 @@ interface LocalSongDataSource {
 
     @Delete
     suspend fun delete(song: Song)
-
 }

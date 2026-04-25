@@ -1,6 +1,5 @@
 package ca.ilianokokoro.umihi.music.ui.screens.playlist
 
-
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -26,15 +25,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
     AndroidViewModel(application) {
     private val _playlist = playlistInfo
     private val _uiState = MutableStateFlow(
-        PlaylistState(
-            screenState = ScreenState.Loading(_playlist)
-        )
+        PlaylistState(screenState = ScreenState.Loading(_playlist))
     )
     val uiState = _uiState.asStateFlow()
 
@@ -61,101 +57,61 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
                         if (screenState is ScreenState.Success) {
                             currentState.copy(
                                 screenState = screenState.copy(
-                                    playlist = updatePlaylistFrom(
-                                        screenState.playlist,
-                                        localPlaylist
-                                    )
+                                    playlist = updatePlaylistFrom(screenState.playlist, localPlaylist)
                                 )
                             )
-                        } else {
-                            currentState
-                        }
+                        } else currentState
                     }
                 }
             }
-
         }
     }
 
     suspend fun observerDownloadJob() {
         val playlist = getPlaylist() ?: return
         val existingJobFlow = downloadRepository.getExistingJobFlow(playlist)
-
         existingJobFlow.collect { workInfos ->
             val workInfo = workInfos.firstOrNull() ?: return@collect
-
             _uiState.update {
                 it.copy(
-                    isDownloading =
-                        workInfo.state == WorkInfo.State.ENQUEUED ||
-                                workInfo.state == WorkInfo.State.RUNNING ||
-                                workInfo.state == WorkInfo.State.BLOCKED
+                    isDownloading = workInfo.state == WorkInfo.State.ENQUEUED ||
+                            workInfo.state == WorkInfo.State.RUNNING ||
+                            workInfo.state == WorkInfo.State.BLOCKED
                 )
-            }
-
-            when (workInfo.state) {
-                WorkInfo.State.SUCCEEDED -> {
-                    printd("Download finished for ${playlist.info.title}")
-                }
-
-                WorkInfo.State.FAILED,
-                WorkInfo.State.CANCELLED -> {
-                    printd("Download failed or cancelled for ${playlist.info.title}")
-                }
-
-                else -> {}
             }
         }
     }
 
     fun refreshPlaylistInfo() {
         viewModelScope.launch {
-            _uiState.update {
-                _uiState.value.copy(
-                    isRefreshing = true
-                )
-            }
+            _uiState.update { _uiState.value.copy(isRefreshing = true) }
             getPlaylistInfoAsync()
-            _uiState.update {
-                _uiState.value.copy(
-                    isRefreshing = false
-                )
-            }
+            _uiState.update { _uiState.value.copy(isRefreshing = false) }
         }
-
     }
 
     fun getPlaylistInfo() {
-        viewModelScope.launch {
-            getPlaylistInfoAsync()
-        }
+        viewModelScope.launch { getPlaylistInfoAsync() }
     }
 
     fun playPlaylist(startingSong: Song? = null) {
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
             PlayerManager.currentController?.playPlaylist(
-                playlist,
-                startingSong?.let { playlist.songs.indexOf(it) } ?: 0
+                playlist, startingSong?.let { playlist.songs.indexOf(it) } ?: 0
             )
         }
     }
 
     fun shufflePlaylist() {
         val playlist = getPlaylist() ?: return
-        viewModelScope.launch {
-            PlayerManager.currentController?.shufflePlaylist(playlist)
-        }
+        viewModelScope.launch { PlayerManager.currentController?.shufflePlaylist(playlist) }
     }
 
     fun downloadPlaylist() {
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
-            if (playlist.downloaded) {
-                return@launch
-            }
-
-            downloadRepository.downloadPlaylist(playlist)
+            if (!playlist.downloaded) downloadRepository.downloadPlaylist(playlist)
         }
     }
 
@@ -168,32 +124,32 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
     }
 
     fun cancelDownload() {
-        if (!uiState.value.isDownloading) {
-            return
-        }
+        if (!uiState.value.isDownloading) return
         val playlist = getPlaylist() ?: return
-        viewModelScope.launch {
-            downloadRepository.cancelPlaylistDownload(playlist)
-        }
+        viewModelScope.launch { downloadRepository.cancelPlaylistDownload(playlist) }
     }
 
     fun downloadSong(song: Song) {
         val playlist = getPlaylist() ?: return
-        if (song.downloaded) {
-            return
-        }
-        viewModelScope.launch {
-            downloadRepository.downloadSong(playlist, song)
-        }
+        if (song.downloaded) return
+        viewModelScope.launch { downloadRepository.downloadSong(playlist, song) }
     }
 
     fun deleteSong(song: Song) {
         val playlist = getPlaylist() ?: return
-        if (!song.downloaded) {
-            return
-        }
+        if (!song.downloaded) return
         viewModelScope.launch {
             downloadRepository.deleteSong(playlist, song)
+            getPlaylistInfoAsync()
+        }
+    }
+
+    /** Eliminar canción de una playlist local (solo la referencia) */
+    fun removeSongFromPlaylist(song: Song) {
+        val playlist = getPlaylist() ?: return
+        viewModelScope.launch {
+            localPlaylistRepository.removeSongFromPlaylist(playlist.info.id, song.youtubeId)
+            // Refrescar la lista
             getPlaylistInfoAsync()
         }
     }
@@ -201,73 +157,54 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
     private suspend fun getPlaylistInfoAsync() {
         try {
             val localPlaylist = localPlaylistRepository.getPlaylistById(_playlist.id)
-
             val settings = datastoreRepository.getSettings()
+
             if (settings.cookies.isEmpty()) {
-                throw Exception("Failed to get to login cookies")
+                // Sin sesión, solo mostrar canciones locales si es una playlist local
+                if (_playlist.id.startsWith("local_")) {
+                    val songs = localPlaylist?.songs ?: emptyList()
+                    _uiState.update {
+                        it.copy(screenState = ScreenState.Success(playlist = Playlist(_playlist, songs)))
+                    }
+                } else if (localPlaylist != null && _playlist.id == Constants.Downloads.DOWNLOADED_PLAYLIST_ID) {
+                    _uiState.update {
+                        it.copy(screenState = ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded })))
+                    }
+                } else {
+                    _uiState.update { it.copy(screenState = ScreenState.Error(Exception("Playlist no disponible sin conexión"))) }
+                }
+                return
             }
 
-            playlistRepository.retrieveOne(Playlist(_playlist), settings)
-                .collect { apiResult ->
-                    _uiState.update { _ ->
-                        _uiState.value.copy(
-                            screenState = when (apiResult) {
-                                is ApiResult.Error -> {
-                                    if (localPlaylist == null) {
-                                        if (_playlist.id == Constants.Downloads.DOWNLOADED_PLAYLIST_ID) {
-                                            val downloadedSongs =
-                                                localSongRepository.getDownloadedSongs()
-                                            ScreenState.Success(
-                                                playlist = Playlist(
-                                                    info = _playlist,
-                                                    songs = downloadedSongs
-                                                )
-                                            )
-                                        } else {
-                                            ScreenState.Error(Exception("Playlist is not downloaded"))
-                                        }
-                                    } else {
-                                        ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded }))
-                                    }
-                                }
-
-                                ApiResult.Loading -> ScreenState.Loading(_playlist)
-                                is ApiResult.Success -> {
-                                    val remotePlaylist = apiResult.data
-                                    ScreenState.Success(
-                                        playlist = updatePlaylistFrom(
-                                            remotePlaylist,
-                                            localPlaylist
-                                        )
-                                    )
-                                }
+            playlistRepository.retrieveOne(Playlist(_playlist), settings).collect { apiResult ->
+                _uiState.update {
+                    it.copy(
+                        screenState = when (apiResult) {
+                            is ApiResult.Error -> {
+                                if (localPlaylist != null) ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded }))
+                                else ScreenState.Error(Exception("Playlist is not downloaded"))
                             }
-                        )
-                    }
+                            ApiResult.Loading -> ScreenState.Loading(_playlist)
+                            is ApiResult.Success -> {
+                                val remotePlaylist = apiResult.data
+                                ScreenState.Success(playlist = updatePlaylistFrom(remotePlaylist, localPlaylist))
+                            }
+                        }
+                    )
                 }
-
+            }
         } catch (ex: Exception) {
             printe(message = ex.toString(), exception = ex)
-            _uiState.update {
-                _uiState.value.copy(
-                    screenState = ScreenState.Error(ex)
-                )
-            }
+            _uiState.update { it.copy(screenState = ScreenState.Error(ex)) }
         }
-
     }
 
     private fun updatePlaylistFrom(oldPlaylist: Playlist, updatedPlaylist: Playlist?): Playlist {
         if (updatedPlaylist != null) {
-            val localMap =
-                updatedPlaylist.songs.associateBy { it.youtubeId }
-
+            val localMap = updatedPlaylist.songs.associateBy { it.youtubeId }
             val updatedSongs = oldPlaylist.songs.map { remoteSong ->
-                localMap[remoteSong.youtubeId]?.copy(
-                    uid = UUID.randomUUID().toString()
-                ) ?: remoteSong
+                localMap[remoteSong.youtubeId]?.copy(uid = java.util.UUID.randomUUID().toString()) ?: remoteSong
             }
-
             return oldPlaylist.copy(songs = updatedSongs)
         }
         return oldPlaylist
@@ -275,21 +212,13 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
 
     private fun getPlaylist(): Playlist? {
         val screenState = _uiState.value.screenState
-        if (screenState !is ScreenState.Success) {
-            return null
-        }
-        return screenState.playlist
+        return if (screenState is ScreenState.Success) screenState.playlist else null
     }
 
     companion object {
-        fun Factory(
-            playlistInfo: PlaylistInfo,
-            application: Application
-        ): ViewModelProvider.Factory =
+        fun Factory(playlistInfo: PlaylistInfo, application: Application): ViewModelProvider.Factory =
             viewModelFactory {
-                initializer {
-                    PlaylistViewModel(playlistInfo, application)
-                }
+                initializer { PlaylistViewModel(playlistInfo, application) }
             }
     }
 }

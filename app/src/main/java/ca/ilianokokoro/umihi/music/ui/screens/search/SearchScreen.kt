@@ -3,6 +3,7 @@
 package ca.ilianokokoro.umihi.music.ui.screens.search
 
 import android.app.Application
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -19,7 +20,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -35,12 +40,17 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
 import ca.ilianokokoro.umihi.music.core.Constants
 import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
+import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.extensions.addNext
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.extensions.playSong
+import ca.ilianokokoro.umihi.music.models.PlaylistInfo
+import ca.ilianokokoro.umihi.music.models.Song
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
 import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
+import ca.ilianokokoro.umihi.music.ui.components.dialog.AddToPlaylistDialog
 import ca.ilianokokoro.umihi.music.ui.components.song.SongListItem
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -51,15 +61,22 @@ fun SearchScreen(
     )
 ) {
     val uiState = searchViewModel.uiState.collectAsStateWithLifecycle().value
-
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+
+    var showAddToPlaylistDialog by remember { mutableStateOf(false) }
+    var songToAdd by remember { mutableStateOf<Song?>(null) }
+    val localPlaylists = remember { mutableStateListOf<PlaylistInfo>() }
 
     LaunchedEffect(Unit) {
         if (uiState.search.isBlank()) {
             focusRequester.requestFocus()
         }
+        // Cargar playlists locales una vez
+        localPlaylists.clear()
+        localPlaylists.addAll(AppDatabase.getInstance(application).playlistRepository().getLocalPlaylists())
     }
 
     Column(
@@ -80,7 +97,7 @@ fun SearchScreen(
                     .fillMaxWidth(),
                 value = uiState.search,
                 onValueChange = { searchViewModel.onSearchFieldChange(it) },
-                label = { Text(text = stringResource(R.string.search)) },
+                label = { Text(stringResource(R.string.search)) },
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Search,
@@ -116,7 +133,11 @@ fun SearchScreen(
                                     addToQueue = { PlayerManager.currentController?.addToQueue(song, context) },
                                     download = { searchViewModel.downloadSong(song) },
                                     delete = { searchViewModel.deleteSong(song) },
-                                    deleteCache = { searchViewModel.deleteCache(song) }
+                                    deleteCache = { searchViewModel.deleteCache(song) },
+                                    addToPlaylist = {
+                                        songToAdd = song
+                                        showAddToPlaylistDialog = true
+                                    }
                                 )
                             }
                         }
@@ -132,5 +153,21 @@ fun SearchScreen(
                 }
             }
         }
+    }
+
+    if (showAddToPlaylistDialog && songToAdd != null) {
+        AddToPlaylistDialog(
+            playlists = localPlaylists,
+            onDismiss = { showAddToPlaylistDialog = false },
+            onPlaylistSelected = { playlist ->
+                scope.launch {
+                    AppDatabase.getInstance(application)
+                        .playlistRepository()
+                        .addSongToPlaylist(playlist.id, songToAdd!!)
+                    Toast.makeText(context, "Añadido a ${playlist.title}", Toast.LENGTH_SHORT).show()
+                    showAddToPlaylistDialog = false
+                }
+            }
+        )
     }
 }
