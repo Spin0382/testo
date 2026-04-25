@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
@@ -52,10 +55,22 @@ fun PlaylistScreen(
     val uiState = playlistViewModel.uiState.collectAsStateWithLifecycle().value
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var showAddToPlaylistDialog by remember { mutableStateOf(false) }
     var songToAdd by remember { mutableStateOf<Song?>(null) }
     val localPlaylists = remember { mutableStateListOf<PlaylistInfo>() }
+
+    // Refrescar al reanudar
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                playlistViewModel.refreshAfterAdd()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
 
     LaunchedEffect(playlistInfo.id) {
         if (playlistInfo.id.startsWith("local_")) {

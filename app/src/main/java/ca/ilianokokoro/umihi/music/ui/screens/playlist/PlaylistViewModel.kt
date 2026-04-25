@@ -94,6 +94,11 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         viewModelScope.launch { getPlaylistInfoAsync() }
     }
 
+    /** Forzar refresco después de añadir una canción desde fuera */
+    fun refreshAfterAdd() {
+        viewModelScope.launch { getPlaylistInfoAsync() }
+    }
+
     fun playPlaylist(startingSong: Song? = null) {
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
@@ -144,12 +149,10 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         }
     }
 
-    /** Eliminar canción de una playlist local (solo la referencia) */
     fun removeSongFromPlaylist(song: Song) {
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
             localPlaylistRepository.removeSongFromPlaylist(playlist.info.id, song.youtubeId)
-            // Refrescar la lista
             getPlaylistInfoAsync()
         }
     }
@@ -160,7 +163,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
             val settings = datastoreRepository.getSettings()
 
             if (settings.cookies.isEmpty()) {
-                // Sin sesión, solo mostrar canciones locales si es una playlist local
                 if (_playlist.id.startsWith("local_")) {
                     val songs = localPlaylist?.songs ?: emptyList()
                     _uiState.update {

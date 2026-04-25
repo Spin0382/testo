@@ -29,23 +29,19 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val songRepository = SongRepository()
     private val datastoreRepository = DatastoreRepository(application)
     private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
-    private val localSongRepository = AppDatabase.getInstance(application).songRepository()
 
     fun getPlaylists() {
         viewModelScope.launch {
             _uiState.update { it.copy(screenState = ScreenState.Loading) }
 
-            // 1. Playlist de descargas (si hay canciones descargadas)
-            val downloadedSongs = localSongRepository.getDownloadedSongs()
-            val downloadsPlaylist = if (downloadedSongs.isNotEmpty()) {
-                PlaylistInfo(
-                    id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
-                    title = "Downloads",
-                    coverHref = ""
-                )
-            } else null
+            // La playlist de descargas siempre está presente
+            val downloadsPlaylist = PlaylistInfo(
+                id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+                title = "Downloads",
+                coverHref = ""
+            )
 
-            // 2. Playlists remotas (puede fallar sin internet)
+            // Playlists remotas (puede fallar sin internet)
             val settings = datastoreRepository.getSettings()
             val remotePlaylists = if (!settings.cookies.isEmpty()) {
                 try {
@@ -61,21 +57,20 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } else emptyList()
 
-            // 3. Playlists locales (creadas por el usuario)
+            // Playlists locales (creadas por el usuario)
             val localPlaylists = try {
                 localPlaylistRepository.getLocalPlaylists()
             } catch (e: Exception) {
                 emptyList()
             }
 
-            // 4. Combinar: descargas + remotas + locales
+            // Combinar: descargas + remotas + locales
             val combined = buildList {
-                downloadsPlaylist?.let { add(it) }
+                add(downloadsPlaylist)
                 addAll(remotePlaylists)
                 addAll(localPlaylists)
             }
 
-            // 5. Actualizar estado (siempre LoggedIn, incluso con lista vacía)
             _uiState.update {
                 it.copy(screenState = ScreenState.LoggedIn(combined))
             }
