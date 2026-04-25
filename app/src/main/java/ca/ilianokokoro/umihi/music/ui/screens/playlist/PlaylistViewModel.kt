@@ -94,7 +94,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         viewModelScope.launch { getPlaylistInfoAsync() }
     }
 
-    /** Forzar refresco después de añadir una canción desde fuera */
     fun refreshAfterAdd() {
         viewModelScope.launch { getPlaylistInfoAsync() }
     }
@@ -124,7 +123,8 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
             downloadRepository.deletePlaylist(playlist)
-            getPlaylistInfoAsync()
+            // Emitir evento para cerrar pantalla
+            _uiState.update { it.copy(screenState = ScreenState.Error(Exception("deleted"))) }
         }
     }
 
@@ -159,21 +159,34 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
 
     private suspend fun getPlaylistInfoAsync() {
         try {
+            // Si es una playlist local, NUNCA consultamos el servidor
+            if (_playlist.id.startsWith("local_")) {
+                val localPlaylist = localPlaylistRepository.getPlaylistById(_playlist.id)
+                if (localPlaylist != null) {
+                    _uiState.update {
+                        it.copy(screenState = ScreenState.Success(playlist = localPlaylist))
+                    }
+                } else {
+                    _uiState.update {
+                        it.copy(screenState = ScreenState.Error(Exception("Playlist no encontrada")))
+                    }
+                }
+                return
+            }
+
+            // Para el resto (remotas, downloads), comportamiento normal
             val localPlaylist = localPlaylistRepository.getPlaylistById(_playlist.id)
             val settings = datastoreRepository.getSettings()
 
             if (settings.cookies.isEmpty()) {
-                if (_playlist.id.startsWith("local_")) {
-                    val songs = localPlaylist?.songs ?: emptyList()
+                if (_playlist.id == Constants.Downloads.DOWNLOADED_PLAYLIST_ID) {
                     _uiState.update {
-                        it.copy(screenState = ScreenState.Success(playlist = Playlist(_playlist, songs)))
-                    }
-                } else if (localPlaylist != null && _playlist.id == Constants.Downloads.DOWNLOADED_PLAYLIST_ID) {
-                    _uiState.update {
-                        it.copy(screenState = ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded })))
+                        it.copy(screenState = ScreenState.Success(playlist = localPlaylist?.copy(songs = localPlaylist.songs.filter { it.downloaded }) ?: Playlist(_playlist)))
                     }
                 } else {
-                    _uiState.update { it.copy(screenState = ScreenState.Error(Exception("Playlist no disponible sin conexión"))) }
+                    _uiState.update {
+                        it.copy(screenState = ScreenState.Error(Exception("Playlist no disponible sin conexión")))
+                    }
                 }
                 return
             }
@@ -183,8 +196,10 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
                     it.copy(
                         screenState = when (apiResult) {
                             is ApiResult.Error -> {
-                                if (localPlaylist != null) ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded }))
-                                else ScreenState.Error(Exception("Playlist is not downloaded"))
+                                if (localPlaylist != null)
+                                    ScreenState.Success(playlist = localPlaylist.copy(songs = localPlaylist.songs.filter { it.downloaded }))
+                                else
+                                    ScreenState.Error(Exception("Playlist is not downloaded"))
                             }
                             ApiResult.Loading -> ScreenState.Loading(_playlist)
                             is ApiResult.Success -> {

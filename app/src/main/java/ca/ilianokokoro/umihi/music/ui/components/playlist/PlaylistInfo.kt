@@ -53,7 +53,8 @@ fun PlaylistInfo(
     onDownloadPressed: () -> Unit,
     onDeletePressed: () -> Unit,
     onCancelDownload: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isLocal: Boolean = false
 ) {
     val songsCount = playlist.songs.count()
     var animatedCount by remember { mutableStateOf<Int?>(null) }
@@ -95,57 +96,51 @@ fun PlaylistInfo(
                 )
 
                 Text(
-                    text = if (songsCount > 0) stringResource(
-                        R.string.songs,
-                        songsCount
-                    ) else "",
+                    text = if (songsCount > 0) stringResource(R.string.songs, songsCount) else "",
                     modifier = Modifier.alpha(alpha)
                 )
-
 
                 if (!playlist.info.isDownloadedPlaylist) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-
-                        FilledIconButton(
-                            onClick = {
+                        if (!isLocal) {
+                            FilledIconButton(
+                                onClick = {
+                                    if (playlist.downloaded) {
+                                        showDeleteDialog.value = true
+                                    } else if (isDownloading) {
+                                        showCancelDialog.value = true
+                                    } else {
+                                        onDownloadPressed()
+                                    }
+                                },
+                                shapes = IconButtonDefaults.shapes(),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    contentColor = MaterialTheme.colorScheme.onSurface
+                                ),
+                                enabled = alpha != 0F
+                            ) {
                                 if (playlist.downloaded) {
-                                    showDeleteDialog.value = true
+                                    Icon(
+                                        imageVector = Icons.Rounded.DownloadDone,
+                                        contentDescription = null,
+                                    )
                                 } else if (isDownloading) {
-                                    showCancelDialog.value = true
+                                    CircularWavyProgressIndicator(modifier = Modifier.size(25.dp))
                                 } else {
-                                    onDownloadPressed()
+                                    Icon(
+                                        imageVector = Icons.Rounded.Download,
+                                        contentDescription = stringResource(R.string.download),
+                                    )
                                 }
-                            },
-                            shapes = IconButtonDefaults.shapes(),
-                            colors = IconButtonDefaults.filledIconButtonColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                contentColor = MaterialTheme.colorScheme.onSurface
-                            ),
-                            enabled = alpha != 0F
-                        ) {
-                            if (playlist.downloaded) {
-                                Icon(
-                                    imageVector = Icons.Rounded.DownloadDone,
-                                    contentDescription = null,
-                                )
-                            } else if (isDownloading) {
-                                CircularWavyProgressIndicator(modifier = Modifier.size(25.dp))
-                            } else {
-                                Icon(
-                                    imageVector = Icons.Rounded.Download,
-                                    contentDescription = stringResource(R.string.download),
-                                )
                             }
                         }
 
-
                         IconButton(
-                            onClick = {
-                                optionsExtended = true
-                            },
+                            onClick = { optionsExtended = true },
                             shapes = IconButtonDefaults.shapes(),
                         ) {
                             Icon(
@@ -158,7 +153,7 @@ fun PlaylistInfo(
                                 onDismissRequest = { optionsExtended = false },
                                 shape = RoundedCornerShape(24.dp),
                             ) {
-                                if (isDownloading) {
+                                if (isDownloading && !isLocal) {
                                     ModernDropdownItem(
                                         leadingIcon = Icons.Rounded.Cancel,
                                         text = stringResource(R.string.cancel_download),
@@ -171,7 +166,7 @@ fun PlaylistInfo(
 
                                 ModernDropdownItem(
                                     leadingIcon = Icons.Rounded.FileDownloadOff,
-                                    text = stringResource(R.string.remove_download),
+                                    text = if (isLocal) "Eliminar playlist" else stringResource(R.string.remove_download),
                                     onClick = {
                                         showDeleteDialog.value = true
                                         optionsExtended = false
@@ -188,8 +183,8 @@ fun PlaylistInfo(
     if (showDeleteDialog.value) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog.value = false },
-            title = { Text(stringResource(R.string.remove_local_playlist)) },
-            text = { Text(stringResource(R.string.remove_local_confirm_text)) },
+            title = { Text(if (isLocal) "Eliminar playlist" else stringResource(R.string.remove_local_playlist)) },
+            text = { Text(if (isLocal) "¿Eliminar esta playlist para siempre?" else stringResource(R.string.remove_local_confirm_text)) },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -228,6 +223,4 @@ fun PlaylistInfo(
             properties = DialogProperties(dismissOnClickOutside = false)
         )
     }
-
-
 }

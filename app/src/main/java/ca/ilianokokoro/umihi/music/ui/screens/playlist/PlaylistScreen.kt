@@ -46,6 +46,7 @@ import kotlinx.coroutines.launch
 fun PlaylistScreen(
     playlistInfo: PlaylistInfo,
     onOpenPlayer: () -> Unit,
+    onBack: () -> Unit,                     // nuevo parámetro para cerrar pantalla
     modifier: Modifier = Modifier,
     application: Application,
     playlistViewModel: PlaylistViewModel = viewModel(
@@ -72,6 +73,13 @@ fun PlaylistScreen(
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
+    // Cerrar pantalla si la playlist fue eliminada
+    LaunchedEffect(uiState.screenState) {
+        if (uiState.screenState is ScreenState.Error && (uiState.screenState.exception.message == "deleted")) {
+            onBack()
+        }
+    }
+
     LaunchedEffect(playlistInfo.id) {
         if (playlistInfo.id.startsWith("local_")) {
             localPlaylists.clear()
@@ -85,12 +93,13 @@ fun PlaylistScreen(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        if (uiState.screenState is ScreenState.Error) {
+        if (uiState.screenState is ScreenState.Error && (uiState.screenState.exception.message != "deleted")) {
             ErrorMessage(ex = uiState.screenState.exception, onRetry = playlistViewModel::getPlaylistInfo)
         } else {
             val playlist: Playlist = when (uiState.screenState) {
                 is ScreenState.Loading -> Playlist(uiState.screenState.playlistInfo)
                 is ScreenState.Success -> uiState.screenState.playlist
+                else -> Playlist(playlistInfo)
             }
             val songs = playlist.songs
 
@@ -103,7 +112,8 @@ fun PlaylistScreen(
                     onPlayPlaylist = playlistViewModel::playPlaylist,
                     onDeletePlaylist = playlistViewModel::deletePlaylist,
                     onCancelDownload = playlistViewModel::cancelDownload,
-                    playlist = playlist
+                    playlist = playlist,
+                    isLocalPlaylist = playlist.info.id.startsWith("local_")
                 )
                 if (uiState.screenState is ScreenState.Loading) LoadingAnimation()
                 else {
@@ -132,7 +142,8 @@ fun PlaylistScreen(
                                 onPlayPlaylist = playlistViewModel::playPlaylist,
                                 onDeletePlaylist = playlistViewModel::deletePlaylist,
                                 onCancelDownload = playlistViewModel::cancelDownload,
-                                playlist = playlist
+                                playlist = playlist,
+                                isLocalPlaylist = playlist.info.id.startsWith("local_")
                             )
                         }
                         items(items = songs, key = { song -> song.uid }) { song ->

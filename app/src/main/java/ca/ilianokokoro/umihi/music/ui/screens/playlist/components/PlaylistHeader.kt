@@ -21,7 +21,8 @@ fun PlaylistHeader(
     onPlayPlaylist: () -> Unit,
     onCancelDownload: () -> Unit,
     onShufflePlaylist: () -> Unit,
-    playlist: Playlist
+    playlist: Playlist,
+    isLocalPlaylist: Boolean = false
 ) {
     Surface(
         modifier = modifier
@@ -36,7 +37,8 @@ fun PlaylistHeader(
                 isDownloading = isDownloading,
                 onDownloadPressed = onDownloadPlaylist,
                 onDeletePressed = onDeletePlaylist,
-                onCancelDownload = onCancelDownload
+                onCancelDownload = onCancelDownload,
+                isLocal = isLocalPlaylist
             )
             ActionButtons(
                 buttonEnabled = !playlist.songs.isEmpty(),

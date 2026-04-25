@@ -191,6 +191,7 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
                             PlaylistScreen(
                                 playlistInfo = key.playlistInfo,
                                 onOpenPlayer = { backStack.add(PlayerScreenKey) },
+                                onBack = backStack::safePop,
                                 application = app
                             )
                         }
