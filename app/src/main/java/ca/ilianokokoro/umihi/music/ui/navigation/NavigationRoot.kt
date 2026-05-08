@@ -63,30 +63,32 @@ fun NavigationRoot(modifier: Modifier = Modifier) {
             .background(MaterialTheme.colorScheme.background),
 
         topBar = {
-            TopAppBar(
-                title = {
-                    val hasTitle = screenConfig.titleId != 0 || screenConfig.title.isNotBlank()
+            if (screenConfig.showTopBar) {
+                TopAppBar(
+                    title = {
+                        val hasTitle = screenConfig.titleId != 0 || screenConfig.title.isNotBlank()
 
-                    AnimatedVisibility(
-                        visible = hasTitle,
-                        enter = fadeIn(tween(Constants.Animation.NAVIGATION_DURATION)),
-                        exit = fadeOut(tween(Constants.Animation.NAVIGATION_DURATION))
-                    ) {
-                        when {
-                            screenConfig.titleId != 0 ->
-                                Text(stringResource(screenConfig.titleId))
+                        AnimatedVisibility(
+                            visible = hasTitle,
+                            enter = fadeIn(tween(Constants.Animation.NAVIGATION_DURATION)),
+                            exit = fadeOut(tween(Constants.Animation.NAVIGATION_DURATION))
+                        ) {
+                            when {
+                                screenConfig.titleId != 0 ->
+                                    Text(stringResource(screenConfig.titleId))
 
-                            screenConfig.title.isNotBlank() ->
-                                Text(screenConfig.title)
+                                screenConfig.title.isNotBlank() ->
+                                    Text(screenConfig.title)
+                            }
+                        }
+                    },
+                    navigationIcon = {
+                        if (screenConfig.showBack) {
+                            BackButton(onBack = backStack::safePop)
                         }
                     }
-                },
-                navigationIcon = {
-                    if (screenConfig.showBack) {
-                        BackButton(onBack = backStack::safePop)
-                    }
-                }
-            )
+                )
+            }
         },
         bottomBar = {
             Column {

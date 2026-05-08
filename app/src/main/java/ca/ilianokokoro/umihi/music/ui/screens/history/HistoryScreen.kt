@@ -2,22 +2,12 @@ package ca.ilianokokoro.umihi.music.ui.screens.history
 
 import android.app.Application
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.History
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,7 +52,6 @@ fun HistoryScreen(
     var songToAdd by remember { mutableStateOf<Song?>(null) }
     val localPlaylists = remember { mutableStateListOf<PlaylistInfo>() }
 
-    // Cargar playlists locales al iniciar
     LaunchedEffect(Unit) {
         localPlaylists.clear()
         localPlaylists.addAll(AppDatabase.getInstance(application).playlistRepository().getLocalPlaylists())
@@ -74,29 +63,33 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            if (historySongs.isNotEmpty()) {
-                IconButton(
-                    onClick = { historyViewModel.clearHistory() },
-                    modifier = Modifier.align(Alignment.End)
-                ) {
-                    Icon(
-                        Icons.Outlined.Delete,
-                        contentDescription = stringResource(R.string.clear_history)
-                    )
+            // Título y botón de vaciar (ahora dentro del scroll)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(R.string.history_title),
+                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.weight(1f)
+                )
+                if (historySongs.isNotEmpty()) {
+                    IconButton(onClick = { historyViewModel.clearHistory() }) {
+                        Icon(
+                            Icons.Outlined.Delete,
+                            contentDescription = stringResource(R.string.clear_history)
+                        )
+                    }
                 }
             }
 
             if (historySongs.isEmpty()) {
-                Column(
+                Box(
                     modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        Icons.Outlined.History,
-                        contentDescription = null,
-                        modifier = Modifier.padding(16.dp)
-                    )
                     Text(
                         text = stringResource(R.string.no_history),
                         textAlign = TextAlign.Center
@@ -162,7 +155,7 @@ fun HistoryScreen(
                     AppDatabase.getInstance(application)
                         .playlistRepository()
                         .addSongToPlaylist(playlist.id, songToAdd!!)
-                    Toast.makeText(context, "Añadido a ${playlist.title}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, stringResource(R.string.added_to_playlist_toast, playlist.title), Toast.LENGTH_SHORT).show()
                     showAddToPlaylistDialog = false
                 }
             }

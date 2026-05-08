@@ -120,6 +120,25 @@
     <string name="added_to_playlist_toast">Añadido a %1$s</string>
     <string name="remove_song_from_playlist">Eliminar canción de la lista de reproducción</string>
 
-    <!-- Sinónimos para shuffle activo -->
+    <!-- Shuffle activo -->
     <string name="shuffle_on">Aleatorio activado</string>
+
+    <!-- Añadidos del fork -->
+    <string name="cache_limit_title">Límite de caché automática</string>
+    <string name="unlimited">Ilimitado</string>
+    <string name="wifi_only_title">Descargar solo por WiFi</string>
+    <string name="wifi_only_subtitle">Evita usar datos móviles para las descargas automáticas</string>
+    <string name="history">Historial</string>
+    <string name="history_title">Historial</string>
+    <string name="no_history">Aún no hay canciones en tu historial.\n¡Escucha algo para empezar!</string>
+    <string name="clear_history">Vaciar historial</string>
+    <string name="delete_cache">Eliminar de la caché</string>
+    <string name="auto_cache_title">Descarga automática</string>
+    <string name="auto_cache_subtitle">Guarda en caché las canciones que escuchas</string>
+    <string name="remove_from_history">Eliminar del historial</string>
+
+    <!-- Menú del FAB unificado -->
+    <string name="fab_menu_title">Añadir a Umihi</string>
+    <string name="fab_create_playlist">Crear lista de reproducción</string>
+    <string name="fab_add_by_link">Añadir enlace de YouTube</string>
 </resources>

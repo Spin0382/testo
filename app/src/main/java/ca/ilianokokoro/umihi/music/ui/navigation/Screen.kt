@@ -36,6 +36,7 @@ data class ScreenUiConfig(
     val showBack: Boolean = false,
     val showBottomBar: Boolean = true,
     val showMiniPlayer: Boolean = true,
+    val showTopBar: Boolean = true,
     val selectedTab: NavKey? = null
 )
 
@@ -61,6 +62,7 @@ fun rememberScreenUiConfig(current: NavKey): ScreenUiConfig {
                 titleId = R.string.history,
                 showBack = false,
                 showBottomBar = true,
+                showTopBar = false,          // ocultamos la barra superior fija
                 selectedTab = HistoryScreenKey
             )
 

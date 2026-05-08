@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -51,9 +50,7 @@ fun HomeScreen(
     var addError by remember { mutableStateOf<String?>(null) }
 
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
-
-    // Ya no llamamos a getPlaylists() al montar ni al reanudar.
-    // Solo refresh manual o tras crear una playlist local.
+    var showFabMenu by remember { mutableStateOf(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState.screenState) {
@@ -96,33 +93,58 @@ fun HomeScreen(
             else -> {}
         }
 
-        // FABs
-        Column(
+        // FAB único con menú
+        FloatingActionButton(
+            onClick = { showFabMenu = true },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
                 .padding(16.dp)
-                .wrapContentSize(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            SmallFloatingActionButton(
-                onClick = { showCreatePlaylistDialog = true }
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
-            }
-
-            FloatingActionButton(
-                onClick = {
-                    clipboardManager.getText()?.let { clipText ->
-                        if (clipText.text.contains("youtube.com") || clipText.text.contains("youtu.be")) {
-                            youtubeLink = clipText.text
-                        }
-                    }
-                    showAddLinkDialog = true
-                }
-            ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Añadir por link")
-            }
+            Icon(Icons.Rounded.Add, contentDescription = stringResource(R.string.add))
         }
+    }
+
+    // Menú del FAB
+    if (showFabMenu) {
+        AlertDialog(
+            onDismissRequest = { showFabMenu = false },
+            title = { Text(stringResource(R.string.fab_menu_title)) },
+            text = {
+                Column {
+                    TextButton(
+                        onClick = {
+                            showFabMenu = false
+                            showCreatePlaylistDialog = true
+                        }
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.fab_create_playlist))
+                    }
+                    TextButton(
+                        onClick = {
+                            showFabMenu = false
+                            clipboardManager.getText()?.let { clipText ->
+                                if (clipText.text.contains("youtube.com") || clipText.text.contains("youtu.be")) {
+                                    youtubeLink = clipText.text
+                                }
+                            }
+                            showAddLinkDialog = true
+                        }
+                    ) {
+                        Icon(Icons.Rounded.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.fab_add_by_link))
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showFabMenu = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            }
+        )
     }
 
     if (showCreatePlaylistDialog) {
@@ -134,7 +156,6 @@ fun HomeScreen(
                         .getInstance(application)
                         .playlistRepository()
                         .createPlaylist(title)
-                    // Refrescar solo las locales (no hace falta red)
                     homeViewModel.refreshPlaylists()
                     onPlaylistPressed(playlistInfo)
                 }
@@ -145,14 +166,14 @@ fun HomeScreen(
     if (showAddLinkDialog) {
         AlertDialog(
             onDismissRequest = { showAddLinkDialog = false; addError = null },
-            title = { Text("Añadir por link de YouTube") },
+            title = { Text(stringResource(R.string.add_by_link)) },
             text = {
                 Column {
                     OutlinedTextField(
                         value = youtubeLink,
                         onValueChange = { youtubeLink = it },
-                        label = { Text("URL de YouTube") },
-                        placeholder = { Text("https://youtu.be/...") },
+                        label = { Text(stringResource(R.string.youtube_url_label)) },
+                        placeholder = { Text(stringResource(R.string.youtube_placeholder)) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
@@ -176,7 +197,7 @@ fun HomeScreen(
                 TextButton(
                     onClick = {
                         if (youtubeLink.isBlank()) {
-                            addError = "Introduce un enlace"
+                            addError = stringResource(R.string.empty)
                             return@TextButton
                         }
                         isAdding = true
@@ -186,23 +207,23 @@ fun HomeScreen(
                             isAdding = false
                             result.onSuccess { song ->
                                 PlayerManager.currentController?.addToQueue(song, context)
-                                Toast.makeText(context, "Añadido a la cola: ${song.title}", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, stringResource(R.string.added_queue_toast), Toast.LENGTH_SHORT).show()
                                 showAddLinkDialog = false
                                 youtubeLink = ""
                             }.onFailure { e ->
-                                addError = e.message ?: "Error desconocido"
+                                addError = e.message ?: stringResource(R.string.error)
                             }
                         }
                     },
                     enabled = !isAdding
-                ) { Text("Añadir") }
+                ) { Text(stringResource(R.string.add)) }
             },
             dismissButton = {
                 TextButton(onClick = {
                     showAddLinkDialog = false
                     youtubeLink = ""
                     addError = null
-                }) { Text("Cancelar") }
+                }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }
