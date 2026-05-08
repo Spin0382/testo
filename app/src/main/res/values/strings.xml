@@ -1,115 +1,111 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name" translatable="false">Umihi Music</string>
-    <string name="playlists">Playlists</string>
+    <!-- General -->
+    <string name="home">Home</string>
+    <string name="search">Search</string>
     <string name="settings">Settings</string>
-    <string name="back_description">Previous screen</string>
+    <string name="playlists">Playlists</string>
+    <string name="downloads">Downloads</string>
     <string name="no_playlists">No playlists found</string>
-    <string name="log_in_message">Please log in to your YouTube account to use the app</string>
-    <string name="playlist_cover">Playlist cover</string>
-    <string name="log_in">Log in</string>
     <string name="empty_playlist">No songs in this playlist</string>
-    <string name="play">Play</string>
-    <string name="shuffle">Shuffle</string>
     <string name="songs">%1$d songs</string>
+    <string name="back_description">Previous screen</string>
+    <string name="close">Close</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="open">Open</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="more">More</string>
+    <string name="actions">Actions</string>
+    <string name="reorder">Reorder</string>
+    <string name="retry">Retry</string>
+
+    <!-- Cuenta -->
+    <string name="account">Account</string>
+    <string name="log_in">Log in</string>
+    <string name="log_out">Log out</string>
+    <string name="logged_in_message">You are logged into your YouTube account</string>
+    <string name="logged_out_message">You are not logged in</string>
+    <string name="login_success">Login successful</string>
+    <string name="login_info_cleared">Login info cleared</string>
+    <string name="clear_login_info">Clear login info</string>
+    <string name="clear_login_message">Clears all saved accounts and login information</string>
+    <string name="log_in_message">Please log in to your YouTube account to use the app</string>
+
+    <!-- Datos y almacenamiento -->
+    <string name="data_and_storage">Data &amp; storage</string>
+    <string name="delete_downloads">Clear all downloads</string>
+    <string name="delete_download">Delete download</string>
+    <string name="remove_download">Remove download</string>
+    <string name="clear_data_message">Deletes all downloaded songs and cache</string>
+    <string name="downloads_cleared">Downloads cleared</string>
+    <string name="cache_cleared">Cache cleared</string>
+
+    <!-- Playlists -->
+    <string name="remove_local_playlist">Remove local playlist</string>
+    <string name="remove_local_confirm_text">Delete downloaded files for this playlist? The playlist will remain available online.</string>
+    <string name="cancel_playlist_download">Cancel playlist download</string>
+    <string name="cancel_playlist_download_text">Cancel the ongoing playlist download?</string>
+    <string name="cancel_download">Cancel download</string>
+    <string name="playlist_cover">Playlist cover</string>
+
+    <!-- Reproductor y cola -->
+    <string name="play">Play</string>
     <string name="pause">Pause</string>
-    <string name="error">Error</string>
+    <string name="shuffle">Shuffle</string>
     <string name="previous">Previous</string>
     <string name="next">Next</string>
     <string name="queue">Queue</string>
-    <string name="error_screen_title">An error occurred</string>
-    <string name="restart_application">Restart application</string>
-    <string name="error_details">Error details</string>
-    <string name="user_error_request">Please report this crash by creating an issue on GitHub or posting in the Umihi Music Discord.\nMake sure to include the logs from the \'Error Details\' button.</string>
-    <string name="close">Close</string>
-    <string name="copy_logs">Copy logs</string>
-    <string name="copied">Copied</string>
-    <string name="view_details">View details</string>
-    <string name="error_log">Error log</string>
-    <string name="login_success">Login successful</string>
-    <string name="empty" translatable="false" />
-    <string name="download">Download</string>
-    <string name="dot" translatable="false">•</string>
-    <string name="open_settings">Open settings</string>
-    <string name="more">More</string>
-    <string name="join_discord_server">Join the Discord server</string>
-    <string name="play_next">Play next</string>
-    <string name="add_to_queue">Add to queue</string>
-    <string name="retry">Retry</string>
-    <string name="play_next_toast">Playing this song next</string>
-    <string name="added_queue_toast">Song added to queue</string>
-    <string name="playing_now">Playing now</string>
-    <string name="up_to_date_message">App is up to date!</string>
-    <string name="update_check_failed">Update check failed</string>
-    <string name="yes">Yes</string>
-    <string name="no">No</string>
-    <string name="update_available">Update available</string>
-    <string name="new_version_body">A new version is available (%1$s).</string>
-    <string name="show_on_github">Show on GitHub</string>
-    <string name="dismiss">Dismiss</string>
-    <string name="open">Open</string>
-    <string name="log_out">Log out</string>
-    <string name="data_and_storage"><![CDATA[Data & storage]]></string>
-    <string name="app_info">App Info</string>
-    <string name="check_for_updates">Check for updates</string>
-    <string name="current_version">Current version: %1$s</string>
-    <string name="delete_downloads">Clear all downloads</string>
-    <string name="clear_login_info">Clear login info</string>
-    <string name="logged_in_message">You are logged into your YouTube account</string>
-    <string name="logged_out_message">You are not logged in</string>
-    <string name="account">Account</string>
-    <string name="clear_data_message">Deletes all downloaded songs and cache</string>
-    <string name="clear_login_message">Clears all saved accounts and login information</string>
-    <string name="login_info_cleared">Login info cleared</string>
-    <string name="cache_cleared">Cache cleared</string>
-    <string name="downloads_cleared">Downloads cleared</string>
-    <string name="invalid_navkey">Invalid NavKey: %1$s</string>
-    <string name="confirm">Confirm</string>
-    <string name="cancel">Cancel</string>
-    <string name="remove_local_playlist">Remove local playlist</string>
-    <string name="remove_local_confirm_text">Delete downloaded files for this playlist? The playlist will remain available online.</string>
-    <string name="ignore">Ignore</string>
-    <string name="change_update_channel">Change update channel</string>
-    <string name="current_update_channel_body">Current channel: %1$s</string>
-    <string name="delete_download">Delete download</string>
-    <string name="webm_extension" translatable="false">%1$s.webm</string>
-    <string name="jpg_extension" translatable="false">%1$s.jpg</string>
-    <string name="beta_update_available">Beta update available</string>
-    <string name="home">Home</string>
-    <string name="search">Search</string>
-    <string name="no_results">No results</string>
-    <string name="get_song_failed">Failed to get song info</string>
     <string name="queue_empty">No songs in the queue</string>
-    <string name="cancel_playlist_download">Cancel playlist download</string>
-    <string name="cancel_playlist_download_text">Cancel the ongoing playlist download?</string>
-    <string name="remove_download">Remove download</string>
-    <string name="cancel_download">Cancel download</string>
-    <string name="general">General</string>
-    <string name="show_podcast_playlist_title">Show Podcast playlist</string>
-    <string name="show_podcast_playlist_description">Shows the \'Episodes for Later\' playlist</string>
-    <string name="special_language_disabled">Special language disabled</string>
-    <string name="special_language_enabled">Special language enabled</string>
-    <string name="reorder">Reorder</string>
-    <string name="actions">Actions</string>
+    <string name="playing_now">Playing now</string>
+    <string name="play_next">Play next</string>
+    <string name="play_next_toast">Playing this song next</string>
+    <string name="add_to_queue">Add to queue</string>
+    <string name="added_queue_toast">Song added to queue</string>
+    <string name="get_song_failed">Failed to get song info</string>
+
+    <!-- Ajustes de reproducción -->
     <string name="playback">Playback</string>
     <string name="enable_audio_offload">Enable audio offload</string>
     <string name="audio_offload_subtitle">Offloads audio decoding to dedicated hardware, improving battery life. May cause playback issues in some cases.</string>
 
-    <!-- Fork additions -->
-    <string name="cache_limit_title">Cache limit</string>
-    <string name="unlimited">Unlimited</string>
-    <string name="wifi_only_title">Download only on WiFi</string>
-    <string name="wifi_only_subtitle">Avoid using mobile data for automatic downloads</string>
-    <string name="history">History</string>
-    <string name="no_history">No songs in your history yet.\nStart listening!</string>
-    <string name="clear_history">Clear history</string>
-    <string name="delete_cache">Delete from cache</string>
-    <string name="auto_cache_title">Auto-cache</string>
-    <string name="auto_cache_subtitle">Cache songs as you listen</string>
-    <string name="remove_from_history">Remove from history</string>
+    <!-- General / Ajustes -->
+    <string name="general">General</string>
+    <string name="show_podcast_playlist_title">Show Podcast playlist</string>
+    <string name="show_podcast_playlist_description">Shows the \'Episodes for Later\' playlist</string>
+    <string name="special_language_enabled">Special language enabled</string>
+    <string name="special_language_disabled">Special language disabled</string>
+    <string name="app_info">App Info</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="current_version">Current version: %1$s</string>
+    <string name="up_to_date_message">App is up to date!</string>
+    <string name="update_check_failed">Update check failed</string>
+    <string name="update_available">Update available</string>
+    <string name="beta_update_available">Beta update available</string>
+    <string name="new_version_body">A new version is available (%1$s).</string>
+    <string name="change_update_channel">Change update channel</string>
+    <string name="current_update_channel_body">Current channel: %1$s</string>
+    <string name="ignore">Ignore</string>
+    <string name="show_on_github">Show on GitHub</string>
+    <string name="join_discord_server">Join the Discord server</string>
 
-    <!-- Nuevas claves para playlists locales y UI (deben existir en el default locale) -->
-    <string name="downloads">Downloads</string>
+    <!-- Error -->
+    <string name="error">Error</string>
+    <string name="error_screen_title">An error occurred</string>
+    <string name="user_error_request">Please report this crash by creating an issue on GitHub or posting in the Umihi Music Discord.\nMake sure to include the logs from the \'Error Details\' button.</string>
+    <string name="error_details">Error details</string>
+    <string name="error_log">Error log</string>
+    <string name="view_details">View details</string>
+    <string name="copy_logs">Copy logs</string>
+    <string name="copied">Copied</string>
+    <string name="restart_application">Restart application</string>
+
+    <!-- Navegación -->
+    <string name="invalid_navkey">Invalid NavKey: %1$s</string>
+
+    <!-- Playlists locales (nuevas) -->
     <string name="create_playlist">Create playlist</string>
     <string name="new_playlist_title">New playlist</string>
     <string name="playlist_name_label">Playlist name</string>
@@ -123,5 +119,26 @@
     <string name="add">Add</string>
     <string name="added_to_playlist_toast">Added to %1$s</string>
     <string name="remove_song_from_playlist">Remove song from playlist</string>
+
+    <!-- Shuffle activo -->
     <string name="shuffle_on">Shuffle on</string>
+
+    <!-- Añadidos del fork -->
+    <string name="cache_limit_title">Cache limit</string>
+    <string name="unlimited">Unlimited</string>
+    <string name="wifi_only_title">Download only on WiFi</string>
+    <string name="wifi_only_subtitle">Avoid using mobile data for automatic downloads</string>
+    <string name="history">History</string>
+    <string name="history_title">History</string>
+    <string name="no_history">No songs in your history yet.\nStart listening!</string>
+    <string name="clear_history">Clear history</string>
+    <string name="delete_cache">Delete from cache</string>
+    <string name="auto_cache_title">Auto-cache</string>
+    <string name="auto_cache_subtitle">Cache songs as you listen</string>
+    <string name="remove_from_history">Remove from history</string>
+
+    <!-- Menú del FAB unificado -->
+    <string name="fab_menu_title">Add to Umihi</string>
+    <string name="fab_create_playlist">Create playlist</string>
+    <string name="fab_add_by_link">Add YouTube link</string>
 </resources>
