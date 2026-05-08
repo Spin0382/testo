@@ -143,4 +143,13 @@
     <string name="fab_menu_title">Add to Umihi</string>
     <string name="fab_create_playlist">Create playlist</string>
     <string name="fab_add_by_link">Add YouTube link</string>
+
+    <!-- ========== CLAVES FALTANTES AGREGADAS ========== -->
+    <string name="webm_extension" translatable="false">%1$s.webm</string>
+    <string name="jpg_extension" translatable="false">%1$s.jpg</string>
+    <string name="download">Download</string>
+    <string name="no_results">No results</string>
+    <string name="open_settings">Open settings</string>
+    <string name="dot" translatable="false">•</string>
+    <string name="empty" translatable="false" />
 </resources>
