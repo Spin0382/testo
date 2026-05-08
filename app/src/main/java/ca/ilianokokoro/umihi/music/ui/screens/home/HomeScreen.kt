@@ -7,8 +7,8 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.PlaylistAdd
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.PlaylistAdd
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -19,9 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ca.ilianokokoro.umihi.music.R
@@ -31,7 +28,6 @@ import ca.ilianokokoro.umihi.music.data.database.AppDatabase
 import ca.ilianokokoro.umihi.music.extensions.addToQueue
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.ui.components.ErrorMessage
-import ca.ilianokokoro.umihi.music.ui.components.LoadingAnimation
 import ca.ilianokokoro.umihi.music.ui.components.dialog.CreatePlaylistDialog
 import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistCard
 import kotlinx.coroutines.launch
@@ -56,27 +52,14 @@ fun HomeScreen(
 
     var showCreatePlaylistDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        homeViewModel.getPlaylists()
-    }
-
-    val lifecycleOwner = LocalLifecycleOwner.current
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                homeViewModel.getPlaylists()
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-    }
+    // Ya no llamamos a getPlaylists() al montar ni al reanudar.
+    // Solo refresh manual o tras crear una playlist local.
 
     Box(modifier = Modifier.fillMaxSize()) {
         when (val state = uiState.screenState) {
-            ScreenState.Loading -> LoadingAnimation()
             is ScreenState.Error -> ErrorMessage(
                 ex = state.exception,
-                onRetry = homeViewModel::getPlaylists
+                onRetry = { homeViewModel.refreshPlaylists() }
             )
             is ScreenState.LoggedIn -> {
                 val playlists = state.playlistInfos
@@ -88,7 +71,7 @@ fun HomeScreen(
                 } else {
                     PullToRefreshBox(
                         isRefreshing = uiState.isRefreshing,
-                        onRefresh = homeViewModel::refreshPlaylists
+                        onRefresh = { homeViewModel.refreshPlaylists() }
                     ) {
                         LazyVerticalGrid(
                             modifier = Modifier.fillMaxSize(),
@@ -110,9 +93,10 @@ fun HomeScreen(
                     }
                 }
             }
+            else -> {}
         }
 
-        // Agrupamos los FABs en una columna al final (derecha) para evitar solapamientos
+        // FABs
         Column(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -120,14 +104,12 @@ fun HomeScreen(
                 .wrapContentSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Botón para crear playlist (arriba del FAB principal)
             SmallFloatingActionButton(
                 onClick = { showCreatePlaylistDialog = true }
             ) {
-                Icon(Icons.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
+                Icon(Icons.AutoMirrored.Rounded.PlaylistAdd, contentDescription = "Crear playlist")
             }
 
-            // FAB principal: añadir por link
             FloatingActionButton(
                 onClick = {
                     clipboardManager.getText()?.let { clipText ->
@@ -152,9 +134,8 @@ fun HomeScreen(
                         .getInstance(application)
                         .playlistRepository()
                         .createPlaylist(title)
-                    // Refrescar la lista de playlists para que aparezca la nueva
-                    homeViewModel.getPlaylists()
-                    // Navegar a la playlist recién creada
+                    // Refrescar solo las locales (no hace falta red)
+                    homeViewModel.refreshPlaylists()
                     onPlaylistPressed(playlistInfo)
                 }
             }

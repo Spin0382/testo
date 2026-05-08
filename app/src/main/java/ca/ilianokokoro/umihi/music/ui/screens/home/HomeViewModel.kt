@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class HomeViewModel(application: Application) : AndroidViewModel(application) {
-    private val _uiState = MutableStateFlow(HomeState())
+    private val _uiState = MutableStateFlow(HomeState(screenState = ScreenState.LoggedIn(emptyList())))
     val uiState = _uiState.asStateFlow()
 
     private val playlistRepository = PlaylistRepository()
@@ -30,25 +30,48 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
     private val datastoreRepository = DatastoreRepository(application)
     private val localPlaylistRepository = AppDatabase.getInstance(application).playlistRepository()
 
-    fun getPlaylists() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(screenState = ScreenState.Loading) }
+    init {
+        // Solo carga el contenido local inmediatamente; las remotas, bajo demanda (pull)
+        loadLocalAndDownloads()
+    }
 
-            // La playlist de descargas siempre está presente
+    private fun loadLocalAndDownloads() {
+        viewModelScope.launch {
+            val downloadsPlaylist = PlaylistInfo(
+                id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
+                title = "Downloads",
+                coverHref = ""
+            )
+            val localPlaylists = try {
+                localPlaylistRepository.getLocalPlaylists()
+            } catch (e: Exception) {
+                emptyList()
+            }
+            val combined = buildList {
+                add(downloadsPlaylist)
+                addAll(localPlaylists)
+            }
+            _uiState.update { it.copy(screenState = ScreenState.LoggedIn(combined)) }
+        }
+    }
+
+    fun refreshPlaylists() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isRefreshing = true) }
+
             val downloadsPlaylist = PlaylistInfo(
                 id = Constants.Downloads.DOWNLOADED_PLAYLIST_ID,
                 title = "Downloads",
                 coverHref = ""
             )
 
-            // Playlists remotas (puede fallar sin internet)
             val settings = datastoreRepository.getSettings()
             val remotePlaylists = if (!settings.cookies.isEmpty()) {
                 try {
                     var resultList = emptyList<PlaylistInfo>()
                     playlistRepository.retrieveAll(settings).collect { apiResult ->
                         if (apiResult is ApiResult.Success) {
-                            resultList = (apiResult as ApiResult.Success<List<PlaylistInfo>>).data
+                            resultList = apiResult.data
                         }
                     }
                     resultList
@@ -57,14 +80,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
                 }
             } else emptyList()
 
-            // Playlists locales (creadas por el usuario)
             val localPlaylists = try {
                 localPlaylistRepository.getLocalPlaylists()
             } catch (e: Exception) {
                 emptyList()
             }
 
-            // Combinar: descargas + remotas + locales
             val combined = buildList {
                 add(downloadsPlaylist)
                 addAll(remotePlaylists)
@@ -72,16 +93,11 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             }
 
             _uiState.update {
-                it.copy(screenState = ScreenState.LoggedIn(combined))
+                it.copy(
+                    screenState = ScreenState.LoggedIn(combined),
+                    isRefreshing = false
+                )
             }
-        }
-    }
-
-    fun refreshPlaylists() {
-        viewModelScope.launch {
-            _uiState.update { it.copy(isRefreshing = true) }
-            getPlaylists()
-            _uiState.update { it.copy(isRefreshing = false) }
         }
     }
 

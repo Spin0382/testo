@@ -27,12 +27,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -66,6 +61,21 @@ fun PlaylistInfo(
         animatedCount = songsCount
     }
 
+    // --- Portada dinámica para playlists locales ---
+    var cover by remember(playlist.info.id) {
+        mutableStateOf(playlist.info.coverPath ?: playlist.info.coverHref)
+    }
+    if (playlist.info.id.startsWith("local_")) {
+        LaunchedEffect(playlist.info.id, playlist.songs.firstOrNull()?.thumbnailHref) {
+            if (playlist.info.coverHref.isBlank() && playlist.songs.isNotEmpty()) {
+                cover = playlist.songs.first().thumbnailHref
+            } else if (playlist.info.coverHref.isNotBlank()) {
+                cover = playlist.info.coverHref
+            }
+        }
+    }
+    // -----------------------------------------------
+
     Row(
         modifier = modifier
             .height(150.dp)
@@ -74,7 +84,7 @@ fun PlaylistInfo(
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         if (!playlist.info.isDownloadedPlaylist) {
-            SquareImage(playlist.info.coverPath ?: playlist.info.coverHref)
+            SquareImage(cover)
         } else {
             Icon(
                 imageVector = Icons.Rounded.Download,
