@@ -6,8 +6,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.media3.common.Player
+import ca.ilianokokoro.umihi.music.core.managers.PlayerManager
 import ca.ilianokokoro.umihi.music.models.Playlist
 import ca.ilianokokoro.umihi.music.ui.components.playlist.PlaylistInfo
 
@@ -24,6 +27,9 @@ fun PlaylistHeader(
     playlist: Playlist,
     isLocalPlaylist: Boolean = false
 ) {
+    val player = PlayerManager.currentController
+    val isShuffleOn = player?.shuffleModeEnabled ?: false
+
     Surface(
         modifier = modifier
             .padding(horizontal = 12.dp)
@@ -49,7 +55,8 @@ fun PlaylistHeader(
                 onShuffleClicked = {
                     onOpenPlayer()
                     onShufflePlaylist()
-                }
+                },
+                isShuffleOn = isShuffleOn
             )
         }
     }

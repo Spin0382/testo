@@ -17,7 +17,7 @@ import ca.ilianokokoro.umihi.music.data.repositories.DatastoreRepository
 import ca.ilianokokoro.umihi.music.data.repositories.DownloadRepository
 import ca.ilianokokoro.umihi.music.data.repositories.PlaylistRepository
 import ca.ilianokokoro.umihi.music.extensions.playPlaylist
-import ca.ilianokokoro.umihi.music.extensions.shufflePlaylist
+import ca.ilianokokoro.umihi.music.extensions.toggleShuffle
 import ca.ilianokokoro.umihi.music.models.Playlist
 import ca.ilianokokoro.umihi.music.models.PlaylistInfo
 import ca.ilianokokoro.umihi.music.models.Song
@@ -109,7 +109,16 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
 
     fun shufflePlaylist() {
         val playlist = getPlaylist() ?: return
-        viewModelScope.launch { PlayerManager.currentController?.shufflePlaylist(playlist) }
+        viewModelScope.launch {
+            val player = PlayerManager.currentController ?: return@launch
+            if (!player.shuffleModeEnabled) {
+                // Asegura que la playlist esté cargada y activa el aleatorio
+                player.playPlaylist(playlist)
+                player.toggleShuffle()   // lo activa
+            } else {
+                player.toggleShuffle()   // lo desactiva
+            }
+        }
     }
 
     fun downloadPlaylist() {
@@ -123,7 +132,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
         val playlist = getPlaylist() ?: return
         viewModelScope.launch {
             downloadRepository.deletePlaylist(playlist)
-            // Emitir evento para cerrar pantalla
             _uiState.update { it.copy(screenState = ScreenState.Error(Exception("deleted"))) }
         }
     }
@@ -159,7 +167,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
 
     private suspend fun getPlaylistInfoAsync() {
         try {
-            // Si es una playlist local, NUNCA consultamos el servidor
             if (_playlist.id.startsWith("local_")) {
                 val localPlaylist = localPlaylistRepository.getPlaylistById(_playlist.id)
                 if (localPlaylist != null) {
@@ -174,7 +181,6 @@ class PlaylistViewModel(playlistInfo: PlaylistInfo, application: Application) :
                 return
             }
 
-            // Para el resto (remotas, downloads), comportamiento normal
             val localPlaylist = localPlaylistRepository.getPlaylistById(_playlist.id)
             val settings = datastoreRepository.getSettings()
 

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Shuffle
+import androidx.compose.material.icons.rounded.ShuffleOn
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -25,7 +26,8 @@ fun ActionButtons(
     buttonEnabled: Boolean,
     onPlayClicked: () -> Unit,
     onShuffleClicked: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    isShuffleOn: Boolean = false
 ) {
     Row(
         modifier = modifier.fillMaxWidth(),
@@ -52,11 +54,11 @@ fun ActionButtons(
             shapes = ButtonDefaults.shapes()
         ) {
             Icon(
-                imageVector = Icons.Rounded.Shuffle,
+                imageVector = if (isShuffleOn) Icons.Rounded.ShuffleOn else Icons.Rounded.Shuffle,
                 contentDescription = stringResource(R.string.shuffle)
             )
             Spacer(Modifier.width(8.dp))
-            Text(stringResource(R.string.shuffle))
+            Text(if (isShuffleOn) "Aleatorio ON" else stringResource(R.string.shuffle))
         }
     }
 }

@@ -18,9 +18,11 @@ fun Player.playPlaylist(playlist: Playlist, index: Int = 0) {
 }
 
 fun Player.shufflePlaylist(playlist: Playlist) {
-    val songs = playlist.songs
-    val shuffledPlaylist = playlist.copy(songs = songs.shuffled())
-    playPlaylist(shuffledPlaylist)
+    // Establece los items originales y activa el modo aleatorio
+    setMediaItems(playlist.mediaItems, 0, C.TIME_UNSET)
+    shuffleModeEnabled = true
+    prepare()
+    play()
 }
 
 fun Player.getQueue(): MutableList<Song> {
@@ -53,11 +55,9 @@ fun Player.playSong(song: Song) {
     val index = queue.indexOfFirst { it.youtubeId == song.youtubeId }
     
     if (index >= 0) {
-        // Ya está en la cola: saltar a esa posición (no borra la cola)
         seekToDefaultPosition(index)
         play()
     } else {
-        // No está en la cola: limpiar y poner solo esta canción
         clearMediaItems()
         setMediaItem(song.mediaItem)
         prepare()
@@ -90,6 +90,11 @@ fun Player.clearQueue() {
 
 fun Player.getCurrentSong(): Song {
     return currentMediaItem.toSong()
+}
+
+/** Activa o desactiva el modo aleatorio (shuffle). Si estaba apagado, lo enciende y viceversa. */
+fun Player.toggleShuffle() {
+    shuffleModeEnabled = !shuffleModeEnabled
 }
 
 private fun Player.playIfQueueCreated() {
