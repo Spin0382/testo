@@ -197,7 +197,7 @@ fun HomeScreen(
                 TextButton(
                     onClick = {
                         if (youtubeLink.isBlank()) {
-                            addError = stringResource(R.string.empty)
+                            addError = context.getString(R.string.error) // Mensaje de error apropiado
                             return@TextButton
                         }
                         isAdding = true
@@ -207,11 +207,11 @@ fun HomeScreen(
                             isAdding = false
                             result.onSuccess { song ->
                                 PlayerManager.currentController?.addToQueue(song, context)
-                                Toast.makeText(context, stringResource(R.string.added_queue_toast), Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, context.getString(R.string.added_queue_toast), Toast.LENGTH_SHORT).show()
                                 showAddLinkDialog = false
                                 youtubeLink = ""
                             }.onFailure { e ->
-                                addError = e.message ?: stringResource(R.string.error)
+                                addError = e.message ?: context.getString(R.string.error)
                             }
                         }
                     },

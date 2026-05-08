@@ -63,7 +63,7 @@ fun HistoryScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Título y botón de vaciar (ahora dentro del scroll)
+            // Título y botón de vaciar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -155,7 +155,11 @@ fun HistoryScreen(
                     AppDatabase.getInstance(application)
                         .playlistRepository()
                         .addSongToPlaylist(playlist.id, songToAdd!!)
-                    Toast.makeText(context, stringResource(R.string.added_to_playlist_toast, playlist.title), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.added_to_playlist_toast, playlist.title),
+                        Toast.LENGTH_SHORT
+                    ).show()
                     showAddToPlaylistDialog = false
                 }
             }
